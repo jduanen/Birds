@@ -16,3 +16,9 @@ ML-based bird detection and classification tools and devices
     * run ML model server and logic on desktop
       - capture and stream audio from ESP32-S3 Sense device
     * run ML model and logic on ESP device, send notifications, log on server (or local file system on SD card)
+
+* Links
+  - https://github.com/atomic14/esp32_wireless_microphone
+  - https://github.com/ikostoski/esp32-i2s-slm
+  - https://iotassistant.io/esp32/smart-door-bell-noise-meter-using-fft-esp32/
+  - https://gist.github.com/krisnoble/6ffef6aa68c374b7f519bbe9593e0c4b
