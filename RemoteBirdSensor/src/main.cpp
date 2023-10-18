@@ -23,11 +23,18 @@ void setup() {
   while (!Serial) {
     delay(10);
   }
-  delay(3000);
+  Serial.setDebugOutput(true);
+  delay(2000);
   Serial.println("BEGIN");
 
   rtsp.begin(ssid, password);
   Serial.println(WiFi.localIP());
+
+  if (audioSource.init()) {
+    Serial.println("ERROR: unable to init audio source");
+    //// FIXME
+    while (true) {;};
+  }
   Serial.println("START");
 }
 
