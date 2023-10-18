@@ -14,14 +14,16 @@ const char *password = WLAN_PASS;
 int port = 554;
 XiaoAudioSource audioSource = XiaoAudioSource();
 AudioStreamer streamer = AudioStreamer(&audioSource);
-RTSPServer rtsp(&streamer); // , port);
+//RTSPServer rtsp(&streamer, port);
+RTSPServer rtsp(&streamer);
 
-void setup()
-{
+
+void setup() {
   Serial.begin(115200);
   while (!Serial) {
     delay(10);
   }
+  delay(3000);
   Serial.println("BEGIN");
 
   rtsp.begin(ssid, password);
@@ -29,7 +31,7 @@ void setup()
   Serial.println("START");
 }
 
-void loop()
-{
+void loop() {
   delay(1000);
+  Serial.print("+");
 }
