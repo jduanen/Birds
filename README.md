@@ -44,7 +44,21 @@ ML-based bird detection and classification tools and devices
           - PCMInfo() class defines: sample rate, channels, sample size
           - PCMFormatPCM() class can use defaults or provide pointer to PCMInfo object
   - ESP32 AV Source
-    * ?
+    * made work with VSCode/PlatformIO
+    * to enable logging (e.g., log_?(<str>))
+      - add "Serial.setDebugOutput(true);" to setup()
+      - add "-DCORE_DEBUG_LEVEL=ARDUHAL_LOG_LEVEL_DEBUG" to platformio.ini
+    * add delay after Serial setup to catch initial output on startup
+    * get this error message
+      - begin(): This mode is not officially supported - audio quality might suffer.
+      At the moment the only supported mode is I2S_PHILIPS_MODE
+      - Modes:
+        I2S_PHILIPS_MODE
+        I2S_RIGHT_JUSTIFIED_MODE
+        I2S_LEFT_JUSTIFIED_MODE
+        PDM_MONO_MODE
+    * from https://espressif-docs.readthedocs-hosted.com/projects/arduino-esp32/en/latest/api/i2s.html
+      - Officially supported operation mode is only I2S_PHILIPS_MODE. Other modes are implemented, but we cannot guarantee flawless execution and behavior.
 
 * Links
   - https://github.com/atomic14/esp32_wireless_microphone
