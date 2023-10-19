@@ -40,5 +40,5 @@ void setup() {
 
 void loop() {
   delay(1000);
-  Serial.print("+");
+  //// TODO check if client disconnected and reset things
 }
