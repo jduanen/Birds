@@ -13,28 +13,40 @@ class XiaoAudioSource : public IAudioSource {
 
   //// FIXME make this take args and select different audio formats
   bool init() {
-    log_i("INIT: PDM_MONO_MODE");
+    log_i("Initialized I2S microphone: PDM_MONO_MODE");
     I2S.setAllPins(_sclkPin, _fsPin, _sdataPin, _outSdPin, _inSdPin);
 //    I2S.setAllPins(-1, 42, 41, -1, -1);
 //    if (!I2S.begin(PDM_MONO_MODE, 16000, 16)) {
 //    if (!I2S.begin(I2S_PHILIPS_MODE, sampleRate, sampleSize)) {
-    if (!I2S.begin(PDM_MONO_MODE, _sampleRate, _sampleSize)) {
-      Serial.println("Failed to initialize I2S!");
+    if (!I2S.setBufferSize(_bufSize)) {
+      log_e("Failed to set buffer size to: %d", _bufSize);
       return true;
     }
     return false;
-  }
+  };
+
+  void start() {
+    if (!I2S.begin(PDM_MONO_MODE, _sampleRate, _sampleSize)) {
+      log_e("Failed to initialize I2S microphone");
+      //// FIXME throw an exception here
+    }
+    I2S.read();  // ????
+    log_i("Started I2S microphone");
+  };
+
+  void stop() {
+    I2S.end();
+    log_i("Stopped I2S microphone");
+  };
 
   int readBytes(void* dest, int maxBytes) override {
-    int16_t* destSamples = (int16_t*)dest;
-    for (int i = 0; i < maxBytes/2; i++) {
-      destSamples[i] = (0xFFFF & _indx++);
+    int numRead = I2S.read(dest, min(I2S.available(), maxBytes));
+    if (numRead == false) {
+      log_e("Microphone read failed");
+      return 0;
     }
-    return maxBytes;
+    return numRead;
   }
-
-  void start() { log_i("start"); }
-  void stop() { log_i("stop"); }
 
  private:
   int _indx = 0;
@@ -45,4 +57,7 @@ class XiaoAudioSource : public IAudioSource {
   static const int _inSdPin = -1;
   static const int _sampleRate = 16000;
   static const int _sampleSize = 16;
+  static const int _bufSize = 256;  // default is 128 samples
+
+  int16_t _buffer[_bufSize];
 };
