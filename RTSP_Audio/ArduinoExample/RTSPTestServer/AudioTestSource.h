@@ -4,17 +4,33 @@
 
 #include "IAudioSource.h"
 
+
+// TODO generalize this for data types and formats
+class AudioTestData {
+public:
+  AudioTestData(int16_t *dataPtr, int size) { data = dataPtr; dataSize = size; };
+
+  int sampleRate = 16000;
+  int channels = 1;
+  int sampleSize = 2;
+  int dataSize;
+  int16_t *data;
+};
+
 class AudioTestSource : public IAudioSource {
-
  public:
-  AudioTestSource(){};
+  AudioTestSource() { AudioTestSource(DEF_TEST_NUM); };
+  AudioTestSource(int testNum) { 
+    _testNum = testNum;
+  };
 
-  int readBytes(void* dest, int maxBytes) override {
-    int16_t* destSamples = (int16_t*)dest;
-    for (int i = 0; i < maxBytes/2; i++) {
-      destSamples[i] = testData[index];
-      index++;
-      if (index >= testDataSamples) index = 0;
+  int readBytes(void *dest, int maxBytes) override {
+    int16_t *destSamples = (int16_t *)dest;
+    int16_t *srcSamples = (int16_t *)_testData[_testNum].data;
+    for (int i = 0; (i < (maxBytes / 2)); i++) {
+      destSamples[i] = srcSamples[i];
+      _index++;
+      if (_index >= _testData[_testNum].dataSize) _index = 0;
     }
     return maxBytes;
   }
@@ -23,10 +39,16 @@ class AudioTestSource : public IAudioSource {
   void stop() { log_i("stop"); }
 
  private:
-  int index = 0;
-  static const int testDataSamples = 1024;
+  int _testNum = DEF_TEST_NUM;
+  int _index = 0;
+  static const int BEEP_DATA_SAMPLES = 1024;
+  static const int DEF_TEST_NUM = 0;
+  static const int MAX_NUM_TESTS = 2;
 
-  const int16_t testData[testDataSamples] = {
+  AudioTestData _testData[1] = { AudioTestData((int16_t *)_beepData, BEEP_DATA_SAMPLES) };
+
+  // Beeps
+  const int16_t _beepData[BEEP_DATA_SAMPLES] = {
       0,      6398,   12551,  18220,  23188,  27263,  30288,  32146,  32767,
       32127,  30249,  27207,  23117,  18136,  12458,  6300,   -100,   -6497,
       -12644, -18304, -23259, -27318, -30326, -32166, -32767, -32107, -30210,
@@ -142,4 +164,14 @@ class AudioTestSource : public IAudioSource {
       -6300,  -12458, -18136, -23117, -27207, -30249, -32127, -32767, -32146,
       -30288, -27263, -23188, -18220, -12551, -6398,  0,
   };
+
+/*
+  // Tone
+  const int16_t toneData[] = {
+
+  };
+
+  // Silence
+  const int16_t silenceData[128] = {};
+*/
 };
