@@ -17,8 +17,14 @@ RTSPServer rtsp(&streamer); // , port);
 
 void setup() {
     Serial.begin(114200);
+    while (!Serial) {
+        delay(10);
+    }
+    Serial.println("BEGIN");
+    delay(1000);
 
     rtsp.begin(ssid, password);    
+    Serial.println("START");
 }
 
 void loop() {
