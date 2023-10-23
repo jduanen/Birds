@@ -1,12 +1,13 @@
 {
-	"folders": [
-		{
-			"path": "BirdSensor"
-		},
-		{
-			"name": "WiFiExample",
-			"path": "../../Documents/PlatformIO/Projects/WiFiExample"
-		}
-	],
-	"settings": {}
+    "folders": [
+        {
+            "name": "BirdSensor",
+            "path": "BirdSensor"
+        },
+        {
+            "name": "RemoteBirdSensor",
+            "path": "RemoteBirdSensor"
+        }
+    ],
+    "settings": {}
 }
