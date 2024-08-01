@@ -3,6 +3,17 @@ ML-based bird detection and classification tools and devices
 
 **WIP**
 
+I looked at several BirdNET-Pi repos on git hub, and settled on the one from ppdpauw (git@github.com:pddpauw/BirdPi.git).  <add reasons why, and what I had to do here>
+
+I tried a variety of different approaches to get high-quality audio input, including:
+  - creating a remote microphone (and camera) unit that streams RTSP audio (and video) to an instance of BirdNET-Pi <put in results here>
+  - tried a large variety of different microphones and ADCs connected directly to the Raspi running BirdNET-Pi. <put in results here>
+  - tried a number of different outdoor WebCams as RTSP sources <put results here>
+
+
+![BirdPi Sensor](BirdPiSensor.png)
+
+
 ## Notes
 * Audio-based bird detector
   - listen for bird sounds
@@ -17,13 +28,83 @@ ML-based bird detection and classification tools and devices
       - capture and stream audio from ESP32-S3 Sense device
     * run ML model and logic on ESP device, send notifications, log on server (or local file system on SD card)
 
-* BirdNet-Pi
-  - ~/BirdNET-Pi/scripts/birdnet_recording.sh
-    * fmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-19-birdnet-RTSP_1-11:24:37.wav
+* Links
+  - https://github.com/atomic14/esp32_wireless_microphone
+  - https://github.com/ikostoski/esp32-i2s-slm
+  - https://iotassistant.io/esp32/smart-door-bell-noise-meter-using-fft-esp32/
+  - https://gist.github.com/krisnoble/6ffef6aa68c374b7f519bbe9593e0c4b
+  - https://wiki.seeedstudio.com/xiao_esp32s3_sense_mic/
+  - https://github.com/rzeldent/esp32cam-rtsp/issues/86
+  - https://github.com/rzeldent/esp32cam-rtsp
+  - https://github.com/spawn451/ESP32-CAM_Audio
+  - https://github.com/AlexxIT/go2rtc#cameras-experience
+  - https://github.com/pschatzmann?tab=repositories
+  - https://pschatzmann.github.io/Micro-RTSP-Audio/docs/html/class_audio_streamer.html
+
+* Birdpi
+  - https://github.com/pddpauw/BirdPi/tree/main
+    * fork that is maintained (unlike mcquirepr89)
+  - uses caddy (instead of nginx)
+  - need to change php version in /etc/caddy/Caddyfile to match system (or install new version)
+  - update applications
+    * scripts/update_birdnet.sh
+  - update model to v2
+    * curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/install_model_V2_4V2.sh| bash
+  - tools: birdnet/''
+  - passwd hash: $2a$14$QIyBqJ07wDpdyvhVB9d8FuW.ogUJAp31AsmDbBOsUV5AzdD/B5Jte
+  - see ~/Notes/Audio.txt
+
+* BirdNet-Pi [DEPRECATED]
+  - command lines
+    * ~/BirdNET-Pi/scripts/birdnet_recording.sh
+      - fmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-19-birdnet-RTSP_1-11:24:37.wav
       - change acodec to pcm_s16be and ar to 16000
-  - fmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-19-birdnet-RTSP_1-11:24:37.wav
-  - ffmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i  rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-14-birdnet-RTSP_1-15:57:13.wav
-  - ffmpeg -nostdin -loglevel error -ac 1 -i rtsp://192.168.166.115:8554 -acodec libmp3lame -b:a 320k -ac 1 -content_type audio/mpeg -f mp3 icecast://source:birdnetpi@localhost:8000/stream -re
+    * ?
+      - fmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-19-birdnet-RTSP_1-11:24:37.wav
+    * ?
+      - ffmpeg -hide_banner -loglevel info -nostdin -vn -thread_queue_size 512 -i  rtsp://192.168.166.115:8554 -map 0:a:0 -t 15 -acodec pcm_s16le -ac 2 -ar 48000 file:/home/jdn/BirdSongs/StreamData/2023-10-14-birdnet-RTSP_1-15:57:13.wav
+    * ?
+      - ffmpeg -nostdin -loglevel error -ac 1 -i rtsp://192.168.166.115:8554 -acodec libmp3lame -b:a 320k -ac 1 -content_type audio/mpeg -f mp3 icecast://source:birdnetpi@localhost:8000/stream -re
+  * ?
+    - arecord -f S16_LE -c1 -r48000 -t wav --max-file-time 15 -D dsnoop:CARD=Device,DEV=0 --use-strftime /home/jdn/BirdSongs/%B-%Y/%d-%A/%F-birdnet-%H:%M:%S.wav
+  * ?
+    - sox -V1 /home/jdn/BirdSongs/October-2023/26-Thursday/2023-10-26-birdnet-16:11:06.wav -n remix 1 rate 24k spectrogram -c BirdSongs/October-2023/26-Thursday/2023-10-26-birdnet-16:11:06.wav -o /home/jdn/BirdSongs/Extracted/spectrogram.png
+  * ?
+    - ffmpeg -nostdin -loglevel error -ac 1 -f alsa -i dsnoop:CARD=Device,DEV=0 -acodec libmp3lame -b:a 320k -ac 1 -content_type audio/mpeg -f mp3 icecast://source:birdnetpi@localhost:8000/stream -re
+  - Settings
+    * use the GLOBAL_6K_V2.4_Model_FP16 model
+    * enter lat/lon
+    * setup Apprise Notifications
+      - select notification mechanism
+        * Google Chat: ?
+        * Home Assistant: ?
+        * IFTTT: ?
+        * MQTT: ?
+        * Telegram: ?
+        * Twitter: ?
+        * WhatsApp: ?
+        * SMS
+          - Twilio: ?
+          - Vonage: ?
+        * Desktop: ?
+        * Email: ?
+      - set white-/black-list birds
+      - select min time between notifications of same species
+  - Advanced Settings:
+    * purge old files when disk full (or keep)
+    * Audio Settings
+      - Audio Card:
+        * 'default': use PulseAudio (always recommended)
+        * else: use ALSA sound card device from "arecord -L" list
+          - USB mic: "dsnoop:CARD=Device,DEV=0"
+          - ?
+      - Audio Channels: 1 [1-2]
+      - Recording Length: 15 seconds [6-60] (multiples of 3 recommended)
+      - Extraction Length:  [min=3, max=Recording Length]
+      - Extractions Audio Format: s16
+      - RSTP Stream: (multiple streams are allowed)
+    * Password
+    * Custom URL
   - ?
 
 * ESP32-S3 Sense A/V source device
@@ -89,22 +170,340 @@ ML-based bird detection and classification tools and devices
   - audacity
     * good visualization and editing of audio streams
   - ffmpeg
-  - ffplay
+  - ffplay: media player using ffmpeg libraries
     * options
       -decoders: list decoders
       -acodec <codec>: audio codec, pcm_s16be, pcm_s16le, etc.
       -vn: no video
-  - jaaa
-  - jack
-  - jnoisemeter
+  - jaaa: JACK and ALSA audio analyzer
+    * 
+  - jackd: JACK audio connection kit sound server
+    * jackd1 and jackd2 exist
+  - jnoisemeter: measure audio test signals
+    * depends on Jack
+    * can measure S/N ratio of sound card
   - rec
+    * record from default device to WAV file
+      - rec --channels 1 -b 24 ./<file>.wav
   - sox
-  - soxi
-  - spek
+    * print information about file
+      - sox -i ./<file>.wav
+    * print statistics on audio in file
+      - sox ./<file>.wav -n stat
+    * print stats for all wav files in a dir
+      - for f in *.wav; do echo "----"; echo $f; sox $f -n stat; sox $f -n stats; done
+  - soxi: get information about audio file
+    * equivalent to sox --i
+  - spek: audio spectrum analyzer
+    * give it an audio file and it displays spectrogram and info on the file
+    * 
   - ?
 
-* Links
-  - https://github.com/atomic14/esp32_wireless_microphone
-  - https://github.com/ikostoski/esp32-i2s-slm
-  - https://iotassistant.io/esp32/smart-door-bell-noise-meter-using-fft-esp32/
-  - https://gist.github.com/krisnoble/6ffef6aa68c374b7f519bbe9593e0c4b
+* USB ADCs
+  - Brand: USB type, bias voltage, linux dev
+  - UGREEN: Type A, 0V, n/a
+    ==> USB device not recognized
+    * ?
+  - UGREEN: Type C, 0V, n/a
+    ==> USB device not recognized
+    * ?
+  - JSAUX: Type A, 0V, n/a
+    ==> USB device not recognized
+    * ?
+  - JSAUX i/o: Type A, 2.7V, ?
+    * Audio Card: "snoop:CARD=AUDIO,DEV=0"
+    * dmesg
+      - ?
+    * arecord -t wav -c 1 -r 48000 -f S16_LE -D dsnoop:CARD=AUDIO,DEV=0 /tmp/foo.wav
+      - low volume
+  - CULILUX: Type C, 0V, Generic USB-C Audio Adapter
+    * Audio Card: "snoop:CARD=Adapter,DEV=0"
+    * dmesg
+      - New USB device found, idVendor=0bda, idProduct=4926, bcdDevice= 0.05
+        Product: USB-C Audio Adapter
+        input: Generic USB-C Audio Adapter as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.1/1-1.1:1.3/0003:0BDA:4926.0003/input/input4
+        hid-generic 0003:0BDA:4926.0003: input,hidraw0: USB HID v1.11 Device [Generic USB-C Audio Adapter] on usb-0000:01:00.0-1.1/input3
+    * ?
+  - SABRENT: Type A, 2.7V, USB Audio Device
+    * input and output capable, different connectors
+      - use the pink connector
+    * Audio Card: "snoop:CARD=Device,DEV=0"
+    * dmesg
+      - New USB device found, idVendor=0d8c, idProduct=0014, bcdDevice= 1.00
+        Product: USB Audio Device
+        Manufacturer: C-Media Electronics Inc.
+        input: C-Media Electronics Inc. USB Audio Device as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.1/1-1.1:1.3/0003:0D8C:0014.0004/input/input5
+        hid-generic 0003:0D8C:0014.0004: input,hidraw0: USB HID v1.00 Device [C-Media Electronics Inc. USB Audio Device] on usb-0000:01:00.0-1.1/input3
+    * arecord -t wav -c 1 -r 48000 -f S16_LE -D dsnoop:CARD=Device,DEV=0 /tmp/foo.wav
+      - low volume
+  - MCSPER: Type A, 0V, ?
+    * input and output capable, same connector
+    * high-speed USB capable?
+    * Audio Card: "snoop:CARD=Audio,DEV=0"
+    * dmesg
+      - New USB device found, idVendor=001f, idProduct=0b21, bcdDevice= 1.00
+        Product: TX USB Audio
+        Manufacturer: TX Co.,Ltd
+        Warning! Unlikely big volume range (=11520), cval->res is probably wrong.
+        [2] FU [PCM Playback Volume] ch = 1, val = -11520/0/1
+        Warning! Unlikely big volume range (=8191), cval->res is probably wrong.
+        [5] FU [Mic Capture Volume] ch = 1, val = 0/8191/1
+        input: TX Co.,Ltd TX USB Audio as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.1/1-1.1:1.3/0003:001F:0B21.0005/input/input6
+        hid-generic 0003:001F:0B21.0005: input,hidraw0: USB HID v2.01 Device [TX Co.,Ltd TX USB Audio] on usb-0000:01:00.0-1.1/input3
+  - GeneralPlus, Type A, 2.44V, USB Audio Device
+    * white dongle, with input and output
+    * Audio Card: "snoop:CARD=Device,DEV=0"
+    * dmesg
+      - USB HID v2.01 Device [GeneralPlus USB Audio Device]
+
+* Microphones
+  - USB Mic
+    * PNP Sound Device
+    * Audio Card: "snoop:CARD=Device,DEV=0"
+    * dmesg:
+      - New USB device found, idVendor=08bb, idProduct=2902, bcdDevice= 1.00
+        Product: USB PnP Sound Device
+        Manufacturer: C-Media Electronics Inc. 
+        input: C-Media Electronics Inc.       USB PnP Sound Device as /devices/platform/scb/fd500000.pcie/pci0000:00/0000:00:00.0/0000:01:00.0/usb1/1-1/1-1.1/1-1.1:1.2/0003:08BB:2902.0002/input/input3
+        hid-generic 0003:08BB:2902.0002: input,hidraw0: USB HID v1.00 Device [C-Media Electronics Inc.       USB PnP Sound Device] on usb-0000:01:00.0-1.1/input2
+    * arecord -t wav -c 1 -r 48000 -f S16_LE -D dsnoop:CARD=Device,DEV=0 /tmp/foo.wav
+      - low volume?
+  - MCm-1
+    * SABRENT
+      - low volume
+    * MCSPER
+      - nothing
+    * CULILUX
+      - nothing
+    * JSAUX i/o
+      - low volume
+  - Sun Mic
+    * SABRENT
+      - very low volume
+  - Sun Lozenge Mic
+    * SABRENT
+      - without battery: nothing
+      - with battery: low volume
+  - Yamaha Mic
+    * SABRENT
+      - very low volume
+  - Moded Sun Mic
+    * SABRENT
+      - noise
+  - Mic MAX4466
+    * ?
+  - Mic Amp - MAX4466
+    * http://adafru.it/1063
+  - Electret Mic Amp - MAX9814
+    * http://adafru.it/1713
+
+* I2S Microphone on Raspi
+  - I2S Microphones
+    * Adafruit PDM MEMS Microphone
+      - links
+        * https://www.adafruit.com/product/3492
+        * https://learn.adafruit.com/adafruit-pdm-microphone-breakout/
+      - Pulse Density Modulation (PDM)
+        * similar to 1bit PWM
+        * 1-3MHz clock rate
+        * data line is square wave that syncs from clock
+        * square wave density is averaged to get analog value
+      - many uctlrs have PDM interfaces
+      - need SW to filter (either in HW or SW)
+      - pins: 3V3, GND, SEL, CLK, DAT
+      - needs PDM interface on Raspi
+    * Adafruit MEMS Microphone SPW2430
+      - links
+        * https://www.adafruit.com/product/2716
+        * 100-10KHz
+        * Vin: 3.3-5VDC, on-board 3V voltage regulator
+        * has series 10uF cap on output
+        * connect DC pin directly to uctrl
+    * Adafruit I2S Microphone
+      - links
+        * https://www.adafruit.com/product/3421
+        * https://learn.adafruit.com/adafruit-i2s-mems-microphone-breakout/arduino-wiring-and-test
+        * https://learn.adafruit.com/adafruit-i2s-mems-microphone-breakout/raspberry-pi-wiring-test
+      - SPH0645LM4H
+        * 1.6-3.6V input (not 5V tolerant)
+      - 50-15KHz
+      - connect to uctrl I2S
+      - pins: Clock, Data, Left-Right (Word Select) Clock)
+        * SEL: Low=left channel, High=right channel, default low/left
+        * LRCL: aka WS, high=right channel Tx, low=left channel Tx
+        * DOUT: data output
+        * BCLK: bit clock, 2-4MHz
+        * GND: ground
+        * 3V: 3V3
+      - can select either Left or Right channel by grounding Select pin
+        * other channel opposite Select and shared Clock, WS, and Data
+      - Raspi mono mic
+        * install
+          - "sudo apt-get -y install git raspberrypi-kernel-headers"
+          - "sudo git clone https://github.com/adafruit/Raspberry-Pi-Installer-Scripts.git"
+          - "sudo cd Raspberry-Pi-Installer-Scripts/i2s_mic_module"
+          - "sudo make clean"
+          - "sudo make"
+          - "sudo make install"
+          - "sudo echo 'snd-i2smic-rpi' > /etc/modules-load.d/snd-i2smic-rpi.conf"
+          - "sudo echo 'options snd-i2smic-rpi rpi_platform_generation=2' > /etc/modprobe.d/snd-i2smic-rpi.conf"
+          - "sudo sed -i -e 's/#dtparam=i2s/dtparam=i2s/g' /boot/config.txt"
+        * manual load drivers
+          - sudo modprobe snd-i2smic-rpi rpi_platform_generation=PI_SEL
+            * PI_SEL: 0=Pi0, 1=Pi2_3, 2=Pi4
+        * load drivers on startup
+          - cd ~
+          - sudo pip3 install --upgrade adafruit-python-shell
+          - wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/i2smic.py
+          - sudo python3 i2smic.py
+        * connections
+          - SEL: ground
+          - BCLK: pin 12 (BCM 18)
+          - DOUT: pin 20 (BCM 38)
+          - LRCL: pin 35 (BCM 19)
+        * test audio input
+          - "arecord -l"
+          - "arecord -D plughw:0 -c1 -r 48000 -f S32_LE -t wav -V mono -v file.wav"
+        * add volume control
+          - ~/.asoundrc
+pcm.dmic_hw {
+  type hw
+  card sndrpii2scard
+  channels 2
+  format S32_LE
+}
+pcm.dmic_sv {
+  type softvol
+  slave.pcm dmic_hw
+  control {
+    name "Boost Capture Volume"
+    card sndrpii2scard
+  }
+  min_dB -3.0
+  max_dB 30.0
+}
+--------
+pcm.device{
+  type hw
+  card sndrpii2scard
+  format S32_LE
+  rate 48000
+}
+pcm.mic_control {
+  type  softvol
+  slave.pcm device
+  control {
+    name "Boost Capture Volume"
+    card sndrpii2scard
+  }
+  min_dB -3.0
+  max_dB 30.0
+}
+pcm.mic_sv {
+  type plug
+  slave.pcm mic_control
+}
+pcm.!default{
+  type plug
+  slave.pcm mic_sv
+}
+        * volume control GUI
+          - "alsamixer"
+            * select I2S mic: "F6"
+            * set recording volume: "F4" and arrow up/down
+        * volume control
+          - "arecord -D dmic_sv -c1 -r 48000 -f S32_LE -t wav -V mono -v <filename>.wav"
+    * PUI Audio I2S Microphones
+      - DMM-4026-B-I2S-EB-R
+        * MEMS MIC EVAL BD -26DB 1.8VDC
+        * Sensitivity: -26db
+        * Freq Range: 20-20KHz
+        * Vcc: 1.8-3.6V
+        * Icc: 1mA
+      - DMM-4026-B-I2S-R
+        * MICROPHONE -26DB 1.8VDC
+        * Sensitivity: -26db
+        * Freq Range: 20-20KHz
+        * Vcc: 1.5-3.6V
+        * Icc: 0.82mA
+  * I2S Microphones
+    - Fermion
+      * MEMS, 3.3V, I2S, SPL: 140dB, SNR: 59dB
+    - MakerPortal
+      ==> obsolete, out of production
+      * INMP441
+      * MEMS
+      * Sensitivity: -26dB
+      * Freq Range: 60-15KHz
+      * Noise Floor: -87dB
+      * Sample Rate: 44.1-48KHz
+    - SPH0645LM4H
+      * MEMS
+      * Sensitivity: -26dB
+      * Freq Range: 20-10KHz
+      * SNR: 65dB
+      * 1.62-3.6V @ 600uA
+    - ICS-43434 TDK InvenSense
+      * MEMS
+      * Sensitivity: -26dB
+      * Freq Range: 60-20KHz
+      * SNR: 64dB
+      * Noise Floor: -87dB
+      * Vcc: 1.65-3.63V @ 550uA
+    - ICS-43432 TDK InvenSense
+      * same as ICS-43434 but lower power and smaller package
+  - measurements
+    * https://forum.edgeimpulse.com/t/different-sound-qualities-when-sampling-with-different-frequencies-and-microphones/6614
+    * INMP441: very quiet and noisy
+    * ICS-43434: better, but still distorted
+    * ICS-43432: even better, but still noisy
+    * PUI-DMM-4026-B: didn't work
+
+
+## BirdPi Repos
+
+* BirdPi
+  - git@github.com:pddpauw/BirdPi.git
+  - last updated four months ago
+  - copy of  https://github.com/mcguirepr89/BirdNET-Pi/
+  - works with Rpi5
+  - improvements
+    * disable Apache
+    * enable Caddy as systemd service
+    * updated requirement.txt file to tflite_runtime-2.14.0-cp311...
+    * disable terminal (reenable in $HOME/views.php after install - line 264/265
+  - use V2.4 model v2
+    *  https://github.com/mcguirepr89/BirdNET-Pi/
+  - RPi Bookworm
+    * network managed by nmcli
+    * examine state: 'nmcli con show'
+    * hardcode network
+      - sudo nmcli con mod "Wired connection 1" ipv4.method manual ipv4.addr 192.168.15.56/24
+      - sudo nmcli con mod "Wired connection 1" ipv4.gateway 192.168.15.1
+      - sudo nmcli con mod "Wired connection 1" ipv4.dns "8.8.8.8"
+      - sudo nmcli con up "Wired connection 1"
+  - installation
+    * start with Bookworm 64b LITE
+    * curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/newinstaller.sh | bash
+    * set model to V2.4 in web browser
+    * use V2.4 Model V2
+      - curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/install_model_V2_4V2.sh | bash
+
+* mcquirepr89
+  - https://github.com/mcguirepr89/BirdNET-Pi.git
+  - last updated a year ago
+  - fork of kahst/BirdNET-Lite (Deprecated)
+  - https://github.com/mcguirepr89/BirdNET-Pi
+  - https://github.com/mcguirepr89/BirdNET-Pi/wiki
+
+* Nachtzuster
+  - git@github.com:Nachtzuster/BirdNET-Pi.git
+  - last updated last month
+  - forked from mcquirepr89
+  - run 64b RaspiOS (Bookworm)
+    * Lite is recommended, but works on Full as well
+
+* notes
+  - lineage: kahst -> mcquirepr89 -> {Nachtzuster | pddpauw/BirdPi}
+
+
