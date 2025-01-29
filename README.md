@@ -14,6 +14,145 @@ I tried a variety of different approaches to get high-quality audio input, inclu
 ![BirdPi Sensor](BirdPiSensor.png)
 
 
+## My implementations of BirdPi
+  - several different repos exist, using Nachtzuster
+    * lineage: kahst -> mcquirepr89 -> pddpauw/BirdPi-\
+                                    \-------------------> Nachtzuster
+  - currently running: https://github.com/pddpauw/BirdPi.git 
+    * No longer supported, refers to this repository: https://github.com/Nachtzuster/BirdNET-Pi
+  - switching to Nachtzuster and adding Headless RasPi support
+
+### Install and Configure BirdNET-Pi and HeadlessRasPi
+
+* clean install of Bookworm-Lite with rpi-imager
+
+* update the system
+  - `sudo apt update`
+  - `sudo apt upgrade`
+
+* install Nachtzuster
+  - `curl -s https://raw.githubusercontent.com/Nachtzuster/BirdNET-Pi/main/newinstaller.sh | bash`
+    * creates a log in '$HOME/installation-$(date "+%F").txt'
+
+* configure BirdNet
+  - set up birdnet.pi
+    * on 'birdpi.lan':
+      - `cp birdnet.conf birdnet.conf.orig`
+      - `chmod 664 birdnet.conf`
+    * on <host>:
+      - `scp birdnet.conf ${USER}@birdpi.lan:BirdNET-Pi/birdnet.conf.old`
+      - `scp apprise.txt ${USER}@birdpi.lan:BirdNET-Pi/`
+  - Tools->Settings->Basic Settings
+    * Location->Latitude/Longitude
+    * Notifications
+      - keep 'hassio:*' line and remove 'mqtt:*' line
+      - Tools->Settings->Advanced Settings
+        * BirdNET-Lite Settings
+          - Minimum Confidence: 0.85
+
+* copy my tools
+  - on 'birdpi.lan': `mkdir ${HOME}/bin/`
+  - on <host>:
+    * `cd ~/Code/Birds/Backups/jdn/BirdNET-Pi/`
+    * `scp rssi.sh maxTemp.sh jdn@birdpi.lan:bin/`
+
+* copy backed up database from earlier version
+==> this doesn't work, figure out how to fix it
+  - on 'birdpi.lan':
+    * `cp BirdDB.txt BirdDB.txt.orig`
+    * `cp scripts/birds.db scripts/birds.db.orig`
+  - on <host>:
+    * `scp BirdDB.txt jdn@birdpi.lan:BirdNET-Pi/`
+    * `scp scripts/birds.db jdn@birdpi.lan:BirdNET-Pi/scripts/`
+
+* install HeadlessRasPi package
+  - install and configure Mini Information Display
+    * enable I2C on RasPi
+      - `sudo raspi-config`
+        * Interface Options -> I2C: `enable`
+      - reboot RasPi
+    * clone my HeadlessRasPi repo from github
+      - git clone git@github.com:jduanen/HeadlessRasPi.git
+    * install Python libraries in a venv on 'birdpi.lan'
+      - `sudo apt install virtualenvwrapper python3-virtualenvwrapper`
+      - `echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc`
+      - `echo "export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python" >> ~/.bashrc`
+      - `echo "source /usr/share/virtualenvwrapper/virtualenvwrapper.sh" >> ~/.bashrc`
+      - `mkvirtualenv --python=`which python3` --prompt=wifi WIFI`
+      - `bash`  # to execute new .bashrc commands
+        * if already loaded new bashrc: `workon WIFI`
+    * install python packages with pip
+      - on 'birdpi.lan'
+        * `pip3 install -r requirements.txt`
+    * configure system to activate information display when the WiFi subsystem's state changes
+      - on 'birdpi.lan'
+        * `cd ~/Code/HeadlessRasPi`
+        * `sudo cp ./etc/NetworkManager/dispatcher.d/90wifi-state-change.sh /etc/NetworkManager/dispatcher.d/`
+  - enable Information Display Trigger Switch
+    * install service description
+      - `cd ${HOME}/Code/HeadlessRasPi`
+      - `sudo ln -s ${HOME}/Code/HeadlessRasPi/etc/systemd/system/infoDisplay.service /etc/systemd/system/`
+    * reload systemd
+      - `sudo systemctl daemon-reload`
+    * start the service
+      - `sudo systemctl start infoDisplay`
+    * make sure it works
+      - `sudo systemctl status infoDisplay`
+    * enable start of service on boot
+      - `sudo systemctl enable infoDisplay`
+    * Connections:
+      - `GND`: pin 39 (bottom row, farthest from the edge)
+      - `GPIO20`: pin 38 (next to the bottom row, closest to the edge)
+
+* install Comitup
+  - fix bookworm WiFi bug
+    * `cd ~/Code/HeadlessRasPi`
+    * `sudo mv ./conf/brcmfmac.conf /etc/modprobe.d/brcmfmac.conf`
+  - get the latest build
+    * get link to latest release at: 'https://davesteele.github.io/comitup/latest/comitup_latest.html'
+      - use this instead of the path below if it's different
+  - install the latest build
+    * `cd ~/Code`
+    * `wget https://davesteele.github.io/comitup/deb/comitup_1.43-1_all.deb`
+    * `sudo dpkg -i --force-all comitup_1.43-1_all.deb`
+  - check that it's been properly installed
+    * `apt list | egrep comitup`  # comitup/now 1.43-1 all [installed,local]
+  - fix bug: NM is out of sync with it's python bindings
+    * "It seems rather fragile manually ensuring that the network manager bindings and its python bindings are in sync."
+    *  patch NetworkManager.py
+      - add NM_DEVICE_TYPE_LOOPBACK (32) to NetworkManager.py
+      - it's a deprecated package, so I cloned the repo and added the necessary lines
+      - `sudo cp /usr/lib/python3/dist-packages/NetworkManager.py /usr/lib/python3/dist-packages/NetworkManager.py.orig`
+      - `cd ~/Code/`
+      - `sudo patch /usr/lib/python3/dist-packages/NetworkManager.py NetworkManager.patch`
+
+* configure Comitup
+  - edit config file to enable flushing of WiFi credentials
+    * `sudo cp /etc/comitup.conf /etc/comitup.conf.orig`
+    * `sudo ex /etc/comitup.conf`
+      - enable flushing the WiFi credentials with `enable_nuke: 1`
+      - can also set `verbose: <n>` if you want logs in `/var/log/comitup.log` and `/var/log/comitup-web.log`
+* finish install of Comitup and test it
+  - remove the file that rpi-imager sets up to preconfigure the WiFi
+    * `sudo rm /etc/NetworkManager/system-connections/preconfigured.nmconnection`
+  - move the web server to a different port (80 and 8080 are taken by birdpi)
+    * `sudo cp /usr/share/comitup/web/comitupweb.py /usr/share/comitup/web/comitupweb.py.orig`
+    * `sudo ex /usr/share/comitup/web/comitupweb.py`
+      - change port '80' to '9090' on line 179
+  - remove it and reboot
+  - test nuke feature by shorting GPIO pins 39 and 40 for three seconds or more
+    * look for green LED to flash three times
+  - notes
+    * the comitup utility writes connection files to /etc/NetworkManager/system-connections/
+      - `comitup-<num>-<num'>.nmconnection`: the 10.41.0.1 config address
+        * [connection]->autoconnect flag set to `false`
+        * [ipv4]->method = `manual`
+      - `<SSID>.nmconnection`: the connection that was provisioned via the web interface
+        * this should be `chmod 600`
+        * this does not have the [connection]->autoconnect flag set to `true`
+          - it doesn't exist at all in this file
+        * [ipv4]->method = `auto`
+
 ## Notes
 * Audio-based bird detector
   - listen for bird sounds
