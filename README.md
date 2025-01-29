@@ -1,8 +1,6 @@
 # Birds
 ML-based bird detection and classification tools and devices
 
-**WIP**
-
 I looked at several BirdNET-Pi repos on git hub, and settled on the one from ppdpauw (git@github.com:pddpauw/BirdPi.git).  <add reasons why, and what I had to do here>
 
 I tried a variety of different approaches to get high-quality audio input, including:
