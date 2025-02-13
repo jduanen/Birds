@@ -50,16 +50,16 @@ I tried a variety of different approaches to get high-quality audio input, inclu
 
 * copy my tools
   - on 'birdpi.lan': `mkdir ${HOME}/bin/`
-  - on <host>:
+  - on 'host':
     * `cd ~/Code/Birds/Backups/jdn/BirdNET-Pi/`
     * `scp rssi.sh maxTemp.sh jdn@birdpi.lan:bin/`
 
-* copy backed up database from earlier version
 ==> this doesn't work, figure out how to fix it
+* copy backed up database from earlier version
   - on 'birdpi.lan':
     * `cp BirdDB.txt BirdDB.txt.orig`
     * `cp scripts/birds.db scripts/birds.db.orig`
-  - on <host>:
+  - on 'host':
     * `scp BirdDB.txt jdn@birdpi.lan:BirdNET-Pi/`
     * `scp scripts/birds.db jdn@birdpi.lan:BirdNET-Pi/scripts/`
 
@@ -76,7 +76,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
       - `echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc`
       - `echo "export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python" >> ~/.bashrc`
       - `echo "source /usr/share/virtualenvwrapper/virtualenvwrapper.sh" >> ~/.bashrc`
-      - `mkvirtualenv --python=`which python3` --prompt=wifi WIFI`
+      - `mkvirtualenv --python=``which python3`` --prompt=wifi WIFI`
       - `bash`  # to execute new .bashrc commands
         * if already loaded new bashrc: `workon WIFI`
     * install python packages with pip
