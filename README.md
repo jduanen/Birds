@@ -123,7 +123,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
       - add NM_DEVICE_TYPE_LOOPBACK (32) to NetworkManager.py
       - it's a deprecated package, so I cloned the repo and added the necessary lines
       - `sudo cp /usr/lib/python3/dist-packages/NetworkManager.py /usr/lib/python3/dist-packages/NetworkManager.py.orig`
-      - `cd ~/Code/`
+      - `cd ~/Code/HeadlessRasPi`
       - `sudo patch /usr/lib/python3/dist-packages/NetworkManager.py NetworkManager.patch`
 
 * configure Comitup
