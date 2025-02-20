@@ -152,6 +152,12 @@ I tried a variety of different approaches to get high-quality audio input, inclu
         * this does not have the [connection]->autoconnect flag set to `true`
           - it doesn't exist at all in this file
         * [ipv4]->method = `auto`
+* test Comitup
+  - short pins 39 and 40 to flush the current configuration
+    * watch for green LED to flash three times indicating done
+  - connect to "comitup-<num>" AP
+  - open 'http://10.0.41.1:9090'
+    * enter in wifi credentials
 
 ## Notes
 * Audio-based bird detector
