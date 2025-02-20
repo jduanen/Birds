@@ -69,6 +69,8 @@ I tried a variety of different approaches to get high-quality audio input, inclu
       - `sudo raspi-config`
         * Interface Options -> I2C: `enable`
       - reboot RasPi
+    * install i2c tools
+      - `sudo apt-get install i2c-tools`
     * clone my HeadlessRasPi repo from github
       - git clone git@github.com:jduanen/HeadlessRasPi.git
     * install Python libraries in a venv on 'birdpi.lan'
