@@ -49,10 +49,10 @@ I tried a variety of different approaches to get high-quality audio input, inclu
           - Minimum Confidence: 0.85
 
 * copy my tools
-  - on 'birdpi.lan': `mkdir ${HOME}/bin/`
+  - on 'birdpi.lan': `mkdir ~/bin/`
   - on 'host':
-    * `cd ~/Code/Birds/Backups/jdn/BirdNET-Pi/`
-    * `scp rssi.sh maxTemp.sh jdn@birdpi.lan:bin/`
+    * `cd ~/Code/Birds/Backups/${USER}/BirdNET-Pi/`
+    * `scp rssi.sh maxTemp.sh ${USER}@birdpi.lan:bin/`
 
 ==> this doesn't work, figure out how to fix it
 * copy backed up database from earlier version
@@ -60,8 +60,8 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * `cp BirdDB.txt BirdDB.txt.orig`
     * `cp scripts/birds.db scripts/birds.db.orig`
   - on 'host':
-    * `scp BirdDB.txt jdn@birdpi.lan:BirdNET-Pi/`
-    * `scp scripts/birds.db jdn@birdpi.lan:BirdNET-Pi/scripts/`
+    * `scp BirdDB.txt ${USER}@birdpi.lan:BirdNET-Pi/`
+    * `scp scripts/birds.db ${USER}@birdpi.lan:BirdNET-Pi/scripts/`
 
 * install HeadlessRasPi package
   - install and configure Mini Information Display
@@ -72,7 +72,9 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * install i2c tools
       - `sudo apt-get install i2c-tools`
     * clone my HeadlessRasPi repo from github
-      - git clone git@github.com:jduanen/HeadlessRasPi.git
+      - `mkdir ~/Code`
+      - `cd ~/Code/`
+      - `git clone git@github.com:jduanen/HeadlessRasPi.git`
     * install Python libraries in a venv on 'birdpi.lan'
       - `sudo apt install virtualenvwrapper python3-virtualenvwrapper`
       - `echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc`
@@ -83,6 +85,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
         * if already loaded new bashrc: `workon WIFI`
     * install python packages with pip
       - on 'birdpi.lan'
+        * `cd ~/Code/HeadlessRasPi`
         * `pip3 install -r requirements.txt`
     * configure system to activate information display when the WiFi subsystem's state changes
       - on 'birdpi.lan'
