@@ -33,14 +33,14 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * creates a log in '$HOME/installation-$(date "+%F").txt'
 
 * configure BirdNet
-  - set up birdnet.pi
-    * on 'birdpi.lan':
+  - if there's a backup, use the old config file
+    * on *birdpi.lan*:
       - `cp birdnet.conf birdnet.conf.orig`
       - `chmod 664 birdnet.conf`
-    * on <host>:
+    * on *host*:
       - `scp birdnet.conf ${USER}@birdpi.lan:BirdNET-Pi/birdnet.conf.old`
       - `scp apprise.txt ${USER}@birdpi.lan:BirdNET-Pi/`
-  - Tools->Settings->Basic Settings
+  - on the web page: http://birdpi.lan --> Tools->Settings->Basic Settings
     * Location->Latitude/Longitude
     * Notifications
       - keep 'hassio:*' line and remove 'mqtt:*' line
@@ -49,46 +49,46 @@ I tried a variety of different approaches to get high-quality audio input, inclu
           - Minimum Confidence: 0.85
 
 * copy my tools
-  - on 'birdpi.lan': `mkdir ~/bin/`
-  - on 'host':
+  - on *birdpi.lan*: `mkdir ~/bin/`
+  - on *host*:
     * `cd ~/Code/Birds/Backups/${USER}/BirdNET-Pi/`
     * `scp rssi.sh maxTemp.sh ${USER}@birdpi.lan:bin/`
 
-==> this doesn't work, figure out how to fix it
 * copy backed up database from earlier version
-  - on 'birdpi.lan':
+==> this doesn't work, figure out how to fix it
+  - on *birdpi.lan*:
     * `cp BirdDB.txt BirdDB.txt.orig`
     * `cp scripts/birds.db scripts/birds.db.orig`
-  - on 'host':
+  - on *host*:
     * `scp BirdDB.txt ${USER}@birdpi.lan:BirdNET-Pi/`
     * `scp scripts/birds.db ${USER}@birdpi.lan:BirdNET-Pi/scripts/`
 
 * install HeadlessRasPi package
   - install and configure Mini Information Display
-    * enable I2C on RasPi
+    * enable I2C on *birdpi.lan*
       - `sudo raspi-config`
         * Interface Options -> I2C: `enable`
-      - reboot RasPi
+      - reboot the device
     * install i2c tools
       - `sudo apt-get install i2c-tools`
     * clone my HeadlessRasPi repo from github
       - `mkdir ~/Code`
       - `cd ~/Code/`
       - `git clone git@github.com:jduanen/HeadlessRasPi.git`
-    * install Python libraries in a venv on 'birdpi.lan'
+    * install Python libraries in a venv on *birdpi.lan*
       - `sudo apt install virtualenvwrapper python3-virtualenvwrapper`
       - `echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc`
       - `echo "export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python" >> ~/.bashrc`
       - `echo "source /usr/share/virtualenvwrapper/virtualenvwrapper.sh" >> ~/.bashrc`
-      - `mkvirtualenv --python=``which python3`` --prompt=wifi WIFI`
-      - `bash`  # to execute new .bashrc commands
-        * if already loaded new bashrc: `workon WIFI`
+      - `mkvirtualenv --python=`which python3` --prompt=wifi WIFI`
+        * if first time, run `bash` to execute new .bashrc commands
+        * if already loaded the new bashrc, just run `workon WIFI`
     * install python packages with pip
-      - on 'birdpi.lan'
+      - on *birdpi.lan*
         * `cd ~/Code/HeadlessRasPi`
         * `pip3 install -r requirements.txt`
     * configure system to activate information display when the WiFi subsystem's state changes
-      - on 'birdpi.lan'
+      - on *birdpi.lan*
         * `cd ~/Code/HeadlessRasPi`
         * `sudo cp ./etc/NetworkManager/dispatcher.d/90wifi-state-change.sh /etc/NetworkManager/dispatcher.d/`
   - enable Information Display Trigger Switch
