@@ -74,7 +74,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * clone my HeadlessRasPi repo from github
       - `mkdir ~/Code`
       - `cd ~/Code/`
-      - `git clone git@github.com:jduanen/HeadlessRasPi.git`
+      - `git clone https://github.com/jduanen/HeadlessRasPi.git`
     * install Python libraries in a venv on *birdpi.lan*
       - `sudo apt install virtualenvwrapper python3-virtualenvwrapper`
       - `echo "export WORKON_HOME=$HOME/.virtualenvs" >> ~/.bashrc`
