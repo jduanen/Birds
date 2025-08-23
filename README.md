@@ -162,6 +162,34 @@ I tried a variety of different approaches to get high-quality audio input, inclu
   - open 'http://10.0.41.1:9090'
     * enter in wifi credentials
 
+### Using MEMS Microphone
+
+* INMP441 I2S mic
+  - Connect to 40pin header
+    * VDD: 14 (3V3)
+    * GND: 17 (GND)
+    * SCK: 12 (BCM18) [I2S BCLK]
+    * WS: 35 (BCM19) [I2S LRCL]
+    * SD: 38 (BCM20) [I2S Data In]
+    * L/R: left=GND, right=3V3 [Channel Select]
+  - enable I2S interface
+    * `sudo ex /boot/config.txt`
+      - dtoverlay=i2s-mmap
+    * reboot
+  - install packages
+    * `sudo apt-get update`
+    * `sudo apt-get install python3-pip`
+    * `sudo pip3 install pyaudio`
+  - enable mic in ALSA
+    * `wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/i2smic.py`
+    * `sudo python3 i2smic.py`
+  - test with ALSA
+    * `arecord -L`
+    * `arecord -D plughw:1 -c2 -r 48000 -f S32_LE -t wav test.wav`
+  - test with sox
+    * `sudo apt install sox`
+    * `sox test.wav test_norm.wav --norm=0`
+
 ## Notes
 * Audio-based bird detector
   - listen for bird sounds
@@ -606,7 +634,6 @@ pcm.!default{
     * ICS-43434: better, but still distorted
     * ICS-43432: even better, but still noisy
     * PUI-DMM-4026-B: didn't work
-
 
 ## BirdPi Repos
 
