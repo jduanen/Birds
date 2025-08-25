@@ -173,16 +173,24 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * SD: 38 (BCM20) [I2S Data In]
     * L/R: left=GND, right=3V3 [Channel Select]
   - enable I2S interface
-    * `sudo ex /boot/config.txt`
-      - dtoverlay=i2s-mmap
+    * `sudo ex /boot/firmware/config.txt`
+      - dtparam=i2s=on
+      - dtoverlay=googlevoicehat-soundcard
+    * **see if this can be done with `raspi-config`**
     * reboot
   - install packages
     * `sudo apt-get update`
     * `sudo apt-get install python3-pip`
-    * `sudo pip3 install pyaudio`
+    * `sudo apt install python3-pyaudio`
   - enable mic in ALSA
     * `wget https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/master/i2smic.py`
-    * `sudo python3 i2smic.py`
+    * set up venv as root and enable I2S mic then exit root
+      - `sudo -s`
+      - `python3 -m venv ~/myenv`
+      - `source ~/myenv/bin/activate`
+      - `python3 -m pip install adafruit-python-shell`
+    * `python3 i2smic.py`
+    * `reboot`
   - test with ALSA
     * `arecord -L`
     * `arecord -D plughw:1 -c2 -r 48000 -f S32_LE -t wav test.wav`
