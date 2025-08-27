@@ -166,8 +166,8 @@ I tried a variety of different approaches to get high-quality audio input, inclu
 
 * INMP441 I2S mic
   - Connect to 40pin header
-    * VDD: 14 (3V3)
-    * GND: 17 (GND)
+    * VDD: 17 (3V3)
+    * GND: 14 (GND)
     * SCK: 12 (BCM18) [I2S BCLK]
     * WS: 35 (BCM19) [I2S LRCL]
     * SD: 38 (BCM20) [I2S Data In]
