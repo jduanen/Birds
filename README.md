@@ -161,6 +161,9 @@ I tried a variety of different approaches to get high-quality audio input, inclu
   - connect to "comitup-<num>" AP
   - open 'http://10.0.41.1:9090'
     * enter in wifi credentials
+* after all is stable, stop or disable Comitup (to save resources)
+  - `sudo systemd stop/disable comitup.service`
+  - can restart again if changing networks
 
 ### Using MEMS Microphone
 
