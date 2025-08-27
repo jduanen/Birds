@@ -42,11 +42,12 @@ I tried a variety of different approaches to get high-quality audio input, inclu
       - `scp apprise.txt ${USER}@birdpi.lan:BirdNET-Pi/`
   - on the web page: http://birdpi.lan --> Tools->Settings->Basic Settings
     * Location->Latitude/Longitude
-    * Notifications
+    * Notifications [Optional]
       - keep 'hassio:*' line and remove 'mqtt:*' line
       - Tools->Settings->Advanced Settings
         * BirdNET-Lite Settings
           - Minimum Confidence: 0.85
+    * Bird Photo Source->Image Provider: Wikipedia
 
 * copy my tools
   - on *birdpi.lan*: `mkdir ~/bin/`
