@@ -48,6 +48,10 @@ I tried a variety of different approaches to get high-quality audio input, inclu
         * BirdNET-Lite Settings
           - Minimum Confidence: 0.85
     * Bird Photo Source->Image Provider: Wikipedia
+  - manually update applications
+    * scripts/update_birdnet.sh
+  - update model to v2
+    * curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/install_model_V2_4V2.sh| bash
 
 * copy my tools
   - on *birdpi.lan*: `mkdir ~/bin/`
