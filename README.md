@@ -54,9 +54,16 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/install_model_V2_4V2.sh| bash
 
 * set limits on journal logs
-  - edit /etc/systemd/journald.conf
-    * 'SystemMaxUse=500M'
-    * alternatively: 'MaxFileSec=7day'
+  - save original conf file
+    * `sudo cp /etc/systemd/journald.conf /etc/systemd/journald.conf.orig`
+  - edit the conf file
+    * `sudo ex /etc/systemd/journald.conf`
+      - limit to 500MB total logs
+        * 'SystemMaxUse=500M'
+      - alternatively: limit to one week of logs
+        * 'MaxFileSec=7day'
+  - restart the system
+    * `sudo reboot`
 
 * copy my tools
   - on *birdpi.lan*: `mkdir ~/bin/`
