@@ -53,6 +53,11 @@ I tried a variety of different approaches to get high-quality audio input, inclu
   - update model to v2
     * curl -s https://raw.githubusercontent.com/pddpauw/BirdPi/main/install_model_V2_4V2.sh| bash
 
+* set limits on journal logs
+  - edit /etc/systemd/journald.conf
+    * 'SystemMaxUse=500M'
+    * alternatively: 'MaxFileSec=7day'
+
 * copy my tools
   - on *birdpi.lan*: `mkdir ~/bin/`
   - on *host*:
