@@ -11,12 +11,11 @@
 #
 ################################################################################
 
-#from dateutil.parser import isoparse
 import logging
-from parse import parse
-#import re
-from systemd import journal
 import time
+
+from systemd import journal
+from parse import parse
 
 
 LOG_LEVEL = "WARNING"
@@ -75,6 +74,7 @@ def main():
         else:
             time.sleep(0.1)
     logger.debug("Exiting")
+
 
 if __name__ == "__main__":
     main()
