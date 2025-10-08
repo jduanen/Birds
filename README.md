@@ -218,19 +218,34 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * `sudo apt install sox`
     * `sox test.wav test_norm.wav --norm=0`
 
-## Notes
-* Audio-based bird detector
-  - listen for bird sounds
-  - classify bird sounds with ML model (e.g., BirdNET)
-  - when given birds are detected (with a given confidence level)
-    * take a picture
-    * send a notification
-    * log time/date
-  - development process
-    * start running ML model and audio capture on desktop
-    * run ML model server and logic on desktop
-      - capture and stream audio from ESP32-S3 Sense device
-    * run ML model and logic on ESP device, send notifications, log on server (or local file system on SD card)
+## Integration with Home Assistant
+* Send Apprise notifications using the HA API
+  - send notifications on infrequent species detection and send weekly report
+  - add line from HA to Appriase Notifications Configuration
+    * e.g., 'hassio://homeassitant.local/<key>'
+* Send detections as MQTT messages using the Apprise notification feature
+  - on birdpi, go to Tools->Settings->Notifications
+    * add this: 'mqtt://username:password@your.mqtt.broker.ip:1883/birdnet/sightings'
+  - on home assistant server, add this to MQTT sensor in configuration.yaml
+'''
+mqtt:
+  sensor:
+    - name: "Birdnet sightings"
+      state_topic: "birdnet/sightings"
+      json_attributes_topic: "birdnet/sightings"
+      value_template: "{{ value_json.Common_Name }}"
+'''
+    * and define the message body to be a JSON object
+  - N.B. This is mutually exclusive with the HA notification method above
+    * because it will be configured to send a different message type on each detection
+* Send all detector results via custom script that scrapes the system logs
+  - install python3-systemd
+    * `sudo apt install python3-systemd`
+  - create venv and install required packages
+    * `python3 -m venv ~/myenv`
+    * `source ~/myenv/bin/activate`
+    * `sudo apt-get update && sudo apt-get install libsystemd-dev pkg-config gcc python3-dev`
+    * `python3 -m pip install systemd-python parse python-dateutil`
 
 * Links
   - https://github.com/atomic14/esp32_wireless_microphone
