@@ -218,7 +218,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * `sudo apt install sox`
     * `sox test.wav test_norm.wav --norm=0`
 
-## Integration with Home Assistant
+## Emittin MQTT messages and Integration with Home Assistant
 * Send Apprise notifications using the HA API
   - send notifications on infrequent species detection and send weekly report
   - add line from HA to Appriase Notifications Configuration
@@ -246,6 +246,36 @@ mqtt:
     * `source ~/myenv/bin/activate`
     * `sudo apt-get update && sudo apt-get install libsystemd-dev pkg-config gcc python3-dev`
     * `python3 -m pip install systemd-python parse python-dateutil paho.mqtt`
+  - filter detections based on a minimum confidence threshold
+    * only publish MQTT messages if the detection probability is > a given value (e.g., 0.5)
+
+* Using the MQTT messages
+  - can create a listener that subscribes to the raw topic
+    * can filter/transform the detection messages and then publish to another topic
+      - e.g., HA can listen to this topic, store the messages, and display the data
+    * create listener like this, e.g.:
+      - `mosquitto_sub -t birdpi/detections > /tmp/detections.json`
+  - can use mlr to look at the detection messages (in json format)
+    * read from file of raw messages and print count for each detected bird (by common name)
+      - `mlr --ijson --from /tmp/detections.txt uniq -c -g common`
+    * print count for each unique common name detected, but only if confidence is > 0.5
+      - `mlr --ijson put '$keep = $confidence > 0.5 ? 1 : 0' then filter '$keep == 1' then uniq -c -g common /tmp/detections.txt`
+    * find all non-bird detections (where Common_Name == Scientific_Name) and count instances of each
+      - `mlr --ijson filter '$common == $scientific' then count -g common /tmp/detections.txt`
+      - N.B. this heuristic isn't perfect, there are some birds that have the same common and scientific name in the set of labels
+      - so use list of non-bird labels instead
+    * find all non-bird detections based on explicit set of (model-specific) non-bird labels
+      - `mlr --ijson filter '$common == "Dog" || $common == "Human" || $common == "Engine" || $common == "Environmental" || $common == "Fireworks" || $common == "Gun" || $common == "Noise" || $common == "Siren"' then count -g common /tmp/detections.txt`
+  - can make a special listener just for non-bird detections
+    * ?
+  - ?
+
+* Non-bird labels recognized by the models
+  - Human_Human, Noise_Noise, Non-Bird_Non-Bird
+  - Dog_Dog, Engine_Engine, Environmental_Environmental, Fireworks_Fireworks, Gun_Gun, Noise_Noise, Siren_Siren
+    * seems like this applies to the model running on 'birdpi.lan'
+  - Human whistle, Human non-vocal
+  - TODO: determine which labels apply to which specific models
 
 * Links
   - https://github.com/atomic14/esp32_wireless_microphone
