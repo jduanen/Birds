@@ -11,8 +11,8 @@
 #
 ################################################################################
 
-#### TODO make this a service -- activate venv first, always run
-#### grep -oP '([A-Z][^\s]*)_\1' Nachtzuster/model/labels_*/* | cut -d ":" -f 2 | sort | uniq
+#### TODO get labels whose scientific and common names are the same
+####      grep -oP '([A-Z][^\s]*)_\1' Nachtzuster/model/labels_*/* | cut -d ":" -f 2 | sort | uniq
 
 import logging
 import select
@@ -79,12 +79,10 @@ def processJournalEntry(entry):
     if len(parts) != 4:
         logger.debug("Bad parse of message, discarding entry")
         return None
-#### TODO check for special cases and generate different messages -- e.g., Engine_Engine
     names = parts[2].split("_")
     if len(names) != 2:
         logger.error("Bad names: %s, discarding entry", parts[2])
         return None
-#### TODO define a minimum confidence level, below which the message is discarded -- e.g., 0.5
     intervalStart = float(parts[0])
     intervalEnd = float(parts[1])
     confidence = float(parts[3])
@@ -103,6 +101,7 @@ def main():
     journalReader = initJournalReader()
     mqttClient = initMqttClient()
     topic = "birdpi/detections"
+    print(f"BirdPi MQTT Publishing on topic: %s", topic)
 
     logger.info("Following INFO logs for user %s starting from most recent logged event", UID)
     while True:
