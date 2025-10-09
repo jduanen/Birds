@@ -1,0 +1,4 @@
+systemd-python
+parse
+python-dateutil
+paho.mqtt
