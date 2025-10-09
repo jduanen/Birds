@@ -1,0 +1,14 @@
+[Unit]
+Description=BirdPi MQTT Detection Publisher Service
+After=network.target
+
+[Service]
+User=jdn
+Group=jdn
+WorkingDirectory=/home/jdn/Code/mqtt/
+ExecStart=/home/jdn/myenv/bin/python /home/jdn/Code/mqtt/mqttPublisher.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
