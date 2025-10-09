@@ -218,7 +218,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
     * `sudo apt install sox`
     * `sox test.wav test_norm.wav --norm=0`
 
-## Emittin MQTT messages and Integration with Home Assistant
+## Emitting MQTT messages and Integration with Home Assistant
 * Send Apprise notifications using the HA API
   - send notifications on infrequent species detection and send weekly report
   - add line from HA to Appriase Notifications Configuration
@@ -248,6 +248,8 @@ mqtt:
     * `python3 -m pip install systemd-python parse python-dateutil paho.mqtt`
   - filter detections based on a minimum confidence threshold
     * only publish MQTT messages if the detection probability is > a given value (e.g., 0.5)
+* run the mqtt publisher as a service
+  - `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/system/birdpiMqtt.service /etc/systemd/system/`
 
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
