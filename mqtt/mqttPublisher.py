@@ -101,7 +101,7 @@ def main():
     journalReader = initJournalReader()
     mqttClient = initMqttClient()
     topic = "birdpi/detections"
-    print(f"BirdPi MQTT Publishing on topic: %s", topic)
+    print(f"BirdPi MQTT Publishing on topic: {topic}")
 
     logger.info("Following INFO logs for user %s starting from most recent logged event", UID)
     while True:
