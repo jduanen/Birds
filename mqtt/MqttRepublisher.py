@@ -7,6 +7,9 @@
 #
 ################################################################################
 
+#### TODO add method(s) to allow run to be done in the background
+
+from abc import ABC, abstractmethod
 import json
 import logging
 import paho.mqtt.client as mqtt
@@ -23,7 +26,7 @@ logging.basicConfig(level=LOG_LEVEL)
 logger = logging.getLogger(__name__)
 
 
-class MqttRepublisher:
+class MqttRepublisher(ABC):
     def __init__(self, subTopic, pubTopic, host, port=DEF_MQTT_PORT, keepAlive=DEF_MQTT_KEEP_ALIVE):
         self.subTopic = subTopic
         self.pubTopic = pubTopic
@@ -41,13 +44,21 @@ class MqttRepublisher:
         if self.client.connect(self.host, self.port) != mqtt.MQTT_ERR_SUCCESS:
             logger.error("Failed to connect to %s on port %d", self.host, self.port)
             return True
-        if self.client.subscribe(self.subTopic) != mqtt.MQTT_ERR_SUCCESS:
+        if self.client.subscribe(self.subTopic)[0] != mqtt.MQTT_ERR_SUCCESS:
             logger.error("Failed to subscribe to topic: %s", self.subTopic)
+            return True
+        self.connected = True
+        return False
+
+    def run(self):
+        """ Only returns if disconnect() is called by a callback
+        """
+        if not self.connected:
+            logger.error("Not connected")
             return True
         if self.client.loop_forever() != mqtt.MQTT_ERR_SUCCESS:
             logger.error("Failed to loop forever")
             return True
-        self.connected = True
         return False
 
     def disconnect(self):
@@ -59,20 +70,29 @@ class MqttRepublisher:
             return True
         return False
 
+    @abstractmethod
+    def _processMsg(self, inMsg):
+        """ This method must be overridden in subclasses
+            Takes incoming message, and returns outgoing message (both as JSON)
+        """
+
     def onMsg(self, client, userdata, msg):
         """ Callback when a message is received on the subscribed topic
         """
         try:
-            payload = json.loads(msg.payload.decode('utf-8'))
-            if not payload:
+            inPayload = json.loads(msg.payload.decode('utf-8'))
+            if not inPayload:
                 logger.error("Failed to decode message payload as JSON")
                 return
 
-            #### TODO call message processing method here
+            outPayload = self._processMsg(inPayload)
+            if not outPayload:
+                logger.error("Failed to process message, passing payload through")
+                outPayload = inPayload
 
             if self.client.publish(self.pubTopic, msg.payload) == mqtt.MQTT_ERR_SUCCESS:
-                logger.debug("Republished message: %s", payload)
+                logger.debug("Republished message: %s", outPayload)
             else:
-                logger.error("Failed to republish message: %s", payload)
+                logger.error("Failed to republish message: %s", outPayload)
         except Exception as e:
             print(f"Error processing message: {e}")
