@@ -16,7 +16,7 @@ import paho.mqtt.client as mqtt
 import select
 
 
-LOG_LEVEL = "DEBUG"  ## "WARNING"
+LOG_LEVEL = "WARNING"
 
 DEF_MQTT_PORT = 1883
 DEF_MQTT_KEEP_ALIVE = 60  # 60secs
@@ -38,7 +38,20 @@ class MqttRepublisher(ABC):
         self.client = mqtt.Client()
         self.client.on_message = self.onMsg
 
+        self.minConfidence = None
         self.connected = False
+
+    def setMinConfidence(self, confidence):
+        if confidence > 1.0:
+            logger.warning("Confidence must be in the range [0.0-1.0]")
+            self.minConfidence = 1.0
+        elif confidence < 0:
+            self.minConfidence = None
+        else:
+            self.minConfidence = confidence
+
+    def getMinConfidence(self):
+        return self.minConfidence
 
     def connect(self):
         if self.client.connect(self.host, self.port) != mqtt.MQTT_ERR_SUCCESS:
@@ -71,7 +84,7 @@ class MqttRepublisher(ABC):
         return False
 
     @abstractmethod
-    def _processMsg(self, inMsg):
+    def _processPayload(self, inPayload):
         """ This method must be overridden in subclasses
             Takes incoming message, and returns outgoing message (both as JSON)
         """
@@ -85,14 +98,16 @@ class MqttRepublisher(ABC):
                 logger.error("Failed to decode message payload as JSON")
                 return
 
-            outPayload = self._processMsg(inPayload)
-            if not outPayload:
-                logger.error("Failed to process message, passing payload through")
-                outPayload = inPayload
-
-            if self.client.publish(self.pubTopic, msg.payload) == mqtt.MQTT_ERR_SUCCESS:
-                logger.debug("Republished message: %s", outPayload)
+            outPayload = self._processPayload(inPayload)
+            if outPayload:
+                if self.client.publish(self.pubTopic, outPayload)[0] == mqtt.MQTT_ERR_SUCCESS:
+#                r = self.client.publish(self.pubTopic, outPayload)
+#                print(r)
+#                if r == mqtt.MQTT_ERR_SUCCESS:
+                    logger.info("Republished message: %s", outPayload)
+                else:
+                    logger.error("Failed to republish message: %s", outPayload)
             else:
-                logger.error("Failed to republish message: %s", outPayload)
+                logger.debug("No message to republish for message: %s", inPayload)
         except Exception as e:
             print(f"Error processing message: {e}")
