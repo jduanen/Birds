@@ -245,7 +245,7 @@ mqtt:
     * `python3 -m venv ~/myenv`
     * `source ~/myenv/bin/activate`
     * `sudo apt-get update && sudo apt-get install libsystemd-dev pkg-config gcc python3-dev`
-    * `python3 -m pip install systemd-python parse python-dateutil`
+    * `python3 -m pip install systemd-python parse python-dateutil paho.mqtt`
 
 * Links
   - https://github.com/atomic14/esp32_wireless_microphone
