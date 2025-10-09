@@ -266,8 +266,8 @@ mqtt:
       - so use list of non-bird labels instead
     * find all non-bird detections based on explicit set of (model-specific) non-bird labels
       - `mlr --ijson filter '$common == "Dog" || $common == "Human" || $common == "Engine" || $common == "Environmental" || $common == "Fireworks" || $common == "Gun" || $common == "Noise" || $common == "Siren"' then count -g common /tmp/detections.txt`
-  - can make a special listener just for non-bird detections
-    * ?
+  - can make republisher for non-bird detections, or specific birds detection
+    * see 'nonBirdFilter.py' and 'birdsFilter.py'
   - ?
 
 * Non-bird labels recognized by the models
