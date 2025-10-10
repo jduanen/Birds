@@ -270,7 +270,13 @@ mqtt:
       - `mlr --ijson filter '$common == "Dog" || $common == "Human" || $common == "Engine" || $common == "Environmental" || $common == "Fireworks" || $common == "Gun" || $common == "Noise" || $common == "Siren"' then count -g common /tmp/detections.txt`
   - can make republisher for non-bird detections, or specific birds detection
     * see 'nonBirdFilter.py' and 'birdsFilter.py'
-  - ?
+  - filter detections by confidence and see how many different types of detections and total number of detection events
+    * `mlr --ijson --from /tmp/detections.json put '$keep = $confidence > 0.850 ? 1 : 0' then filter '$keep == 1' then uniq -c -g common | mlr stats1 -a sum,count -f count,count`
+      - e.g., (Confidence, Types, Events):
+        * (0.0, 1448, 55888)
+        * (0.5, 184, 7202)
+        * (0.75, 82, 3666)
+        * (0.85, 40, 2328)
 
 * Non-bird labels recognized by the models
   - Human_Human, Noise_Noise, Non-Bird_Non-Bird
