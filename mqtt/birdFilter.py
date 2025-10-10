@@ -50,8 +50,9 @@ class myBirdsRepublisher(MqttRepublisher):
 
 
 def main():
-    print(f"My Birds: {MY_NAME_PARTS}")
+    print(f"Republishing topic '{MQTT_SUB_TOPIC}' on topic '{MQTT_PUB_TOPIC}'")
     repub = myBirdsRepublisher(MQTT_SUB_TOPIC, MQTT_PUB_TOPIC, MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
+    print(f"My Birds: {MY_NAME_PARTS}")
     repub.setMinConfidence(0.0)
     print(f"Min Confidence: {repub.getMinConfidence()}")
     if repub.connect():

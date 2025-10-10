@@ -52,6 +52,7 @@ class NonBirdRepublisher(MqttRepublisher):
 
 
 def main():
+    print(f"Republishing topic '{MQTT_SUB_TOPIC}' on topic '{MQTT_PUB_TOPIC}'")
     repub = NonBirdRepublisher(MQTT_SUB_TOPIC, MQTT_PUB_TOPIC, MQTT_HOST, MQTT_PORT, MQTT_KEEPALIVE)
     print(f"Non-Bird Labels: {NON_BIRD_LABELS}")
     repub.setMinConfidence(0.0)
