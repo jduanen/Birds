@@ -248,15 +248,36 @@ mqtt:
     * `python3 -m pip install systemd-python parse python-dateutil paho.mqtt`
   - filter detections based on a minimum confidence threshold
     * only publish MQTT messages if the detection probability is > a given value (e.g., 0.5)
+  - topics to publish detection events on
+    * 'birdpi/raw_detections': all detections (no filtering)
+    * 'birdpi/confident_detections': all detections with greater than a given confidence level
+    * 'birdpi/my_birds': detections in a given list of common names and a confidence level
+    * 'birdpi/non_birds': detections of events that are not bird sounds
+* the mqtt publisher reads a config file at startup
+  - edit the config file to contain the desired parameters
+    * MinConfidence: the minimum confidence needed to publish on 'birdpi/confident_detections' and 'birdpi/my_birds' topics
+    * BirdsOfInterest: comma-separated list of common names to publish (if confidence >= MinConfidence)
+    * BirdsOfNoInterest: comma-separated list of common names to not publish (i.e., a blacklist)
+    * Uid: uid that the birdpi services are running under
+    * WaitMsec: msec to wait before timing out on trying to read the journal logs
+    * MqttHost: name of the host where the MQTT server is running
+    * MqttPort: port that the MQTT server is using
+    * MqttKeepalive: number of seconds to keep the connection to the MQTT server open
+    * DisableRawDetections: if yes, disable publishing to the 'birdpi/raw_detections' topic
+    * DisableConfidentDetections: if yes, disable publishing to the 'birdpi/confident_detections' topic
+    * DisableMyBirds: if yes, disable publishing to the 'birdpi/my_birds' topic
+    * DisableNonBirds: if yes, disable publishing to the 'birdpi/non_birds' topic
+  - link the config file to where it belongs
+    * `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/mqttd.conf /etc/systemd/`
 * run the mqtt publisher as a service
-  - `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/system/birdpiMqtt.service /etc/systemd/system/`
+  - `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/system/mqttd.service /etc/systemd/system/`
 
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
     * can filter/transform the detection messages and then publish to another topic
       - e.g., HA can listen to this topic, store the messages, and display the data
     * create listener like this, e.g.:
-      - `mosquitto_sub -t birdpi/detections > /tmp/detections.json`
+      - `mosquitto_sub -t birdpi/raw_detections > /tmp/detections.json`
   - can use mlr to look at the detection messages (in json format)
     * read from file of raw messages and print count for each detected bird (by common name)
       - `mlr --ijson --from /tmp/detections.txt uniq -c -g common`
