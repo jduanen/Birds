@@ -6,7 +6,7 @@ After=network.target
 User=jdn
 Group=jdn
 WorkingDirectory=/home/jdn/Code/mqtt/
-ExecStart=/home/jdn/myenv/bin/python /home/jdn/Code/mqtt/mqttPublisher.py
+ExecStart=/home/jdn/myenv/bin/python /home/jdn/Code/mqtt/mqttd.py
 Restart=always
 RestartSec=5
 
