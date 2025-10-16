@@ -18,6 +18,7 @@ import configparser
 import logging
 import select
 import sys
+#import tempfile
 import time
 
 import json
@@ -38,10 +39,21 @@ DEF_MQTT_HOST = "gpuServer1.lan"
 DEF_MQTT_PORT = 1883
 DEF_MQTT_KEEPALIVE = 60
 
+NON_BIRD_LABELS = [
+    "Dog_Dog",
+    "Engine_Engine",
+    "Environmental_Environmental",
+    "Fireworks_Fireworks",
+    "Gun_Gun",
+    "Human_Human",
+    "Noise_Noise",
+    "Siren_Siren"
+]
 
-LOG_LEVEL = DEF_LOG_LEVEL  #### TMP TMP TMP
-logging.basicConfig(level=LOG_LEVEL)
-logger = logging.getLogger(__name__)
+NON_BIRD_NAMES = [names.split('_') for names in NON_BIRD_LABELS]
+NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
+
+logger = None
 poller = None
 
 
@@ -84,7 +96,7 @@ def processJournalEntry(entry):
     parts = list(res)
     logger.debug("parts: %s", parts)
     if len(parts) != 4:
-        logger.debug("Bad parse of message, discarding entry")
+        logger.info("Bad parse of message, discarding entry")
         return None
     names = parts[2].split("_")
     if len(names) != 2:
@@ -107,7 +119,13 @@ def processJournalEntry(entry):
 def getConfig():
     config = configparser.ConfigParser()
     if not config.read(CONF_FILE_PATH):
+        logging.basicConfig(level=DEF_LOG_LEVEL)
+        logger = logging.getLogger(__name__)
         logger.error("Failed to read config file at: %s", CONF_FILE_PATH)
+        sys.exit(1)
+    minC = float(config['MQTT']['MinConfidence'])
+    if minC < 0 or minC > 1.0:
+        logger.error("Invalid MinConfidence value: %f (must be in [0.0,1.0])", minC)
         sys.exit(1)
     conf = {
         'LogLevel': getattr(logging, config['MQTT'].get('LogLevel', fallback=DEF_LOG_LEVEL)),
@@ -116,11 +134,11 @@ def getConfig():
         'MqttHost': config['MQTT'].get('MqttHost', fallback=DEF_MQTT_HOST),
         'MqttPort': config['MQTT'].getint('MqttPort', fallback=DEF_MQTT_PORT),
         'MqttKeepalive': config['MQTT'].getint('MqttKeepalive', fallback=DEF_MQTT_KEEPALIVE),
-        'DisableRawDetections': config['MQTT'].getboolean('DisableRawDetections', fallback=True),
+        'DisableRawDetections': config['MQTT'].getboolean('DisableRawDetections', fallback=False),
         'DisableConfidentDetections': config['MQTT'].getboolean('DisableConfidentDetections', fallback=False),
         'DisableMyBirds': config['MQTT'].getboolean('DisableMyBirds', fallback=False),
         'DisableNonBirds': config['MQTT'].getboolean('DisableNonBirds', fallback=False),
-        'MinConfidence': config['MQTT'].getint('MinConfidence', fallback=DEF_CONFIDENCE),
+        'MinConfidence': config['MQTT'].getfloat('MinConfidence', fallback=DEF_CONFIDENCE),
     }
     conf['BirdsOfInterest'] = config['MQTT'].get('BirdsOfInterest', fallback=[])
     if conf['BirdsOfInterest']:
@@ -128,21 +146,27 @@ def getConfig():
     conf['BirdsOfNoInterest'] = config['MQTT'].get('BirdsOfNoInterest', fallback=[])
     if conf['BirdsOfNoInterest']:
         conf['BirdsOfNoInterest'] = [item.strip() for item in conf['BirdsOfNoInterest'].split(',')]
+    if set(conf['BirdsOfInterest']) & set(conf['BirdsOfNoInterest']):
+        logging.basicConfig(level=conf['LogLevel'])
+        logger = logging.getLogger(__name__)
+        logger.error("Cannot have a name that is both of interest and of no interest")
+        sys.exit(1)
     return conf
 
 def main():
-    global poller
+    global poller, logger
 
     conf = getConfig()
-    if False:
-        json.dump(conf, sys.stdout, indent=4, sort_keys=False)
+#    with tempfile.NamedTemporaryFile(prefix="tmpMqtt_", suffix="*.txt", delete=False) as f:
+#        json.dump(conf, sys.stderr, indent=4, sort_keys=False)
+    logging.basicConfig(level=conf['LogLevel'])
+    logger = logging.getLogger(__name__)
     poller = select.poll()
     journalReader = initJournalReader(conf['Uid'])
     mqttClient = initMqttClient(conf['MqttHost'], conf['MqttPort'], conf['MqttKeepalive'])
-    topic = "birdpi/detections"
-    print(f"BirdPi MQTT Publishing on topic: {topic}")
 
-    logger.info("Following INFO logs for user %s starting from most recent logged event", conf['Uid'])
+    logger.info("Following user '%s' INFO logs starting from the last event",
+                conf['Uid'])
     while True:
         events = poller.poll(conf['WaitMsec'])
         if events:
@@ -155,16 +179,39 @@ def main():
                         break
                     msg = processJournalEntry(entry)
                     if msg:
-                        publishDetection(mqttClient, topic, msg)
+                        if msg['common'] in conf['BirdsOfNoInterest']:
+                            # skip detections of no interest
+                            logger.warning("Detected name '%s' not of interest", msg['common']) ####FIXME
+                            continue
+                        if not conf['DisableRawDetections']:
+                            # all detections, not of no interest, with no other filtering
+                            topic = "birdpi/raw_detections"
+                            publishDetection(mqttClient, topic, msg)
+                        if (not conf['DisableConfidentDetections'] and 
+                            (msg['confidence'] >= conf['MinConfidence'])):
+                            # all detections not of no interest and of sufficient confidence level
+                            topic = "birdpi/confident_detections"
+                            publishDetection(mqttClient, topic, msg)
+                        if (not conf['DisableMyBirds'] and
+                            (msg['confidence'] >= conf['MinConfidence']) and
+                            (msg['common'] in conf['BirdsOfInterest'])):
+                            # detections of interest, not of no interest, and of sufficient confidence level
+                            topic = "birdpi/my_birds"
+                            publishDetection(mqttClient, topic, msg)
+                        if (not conf['DisableNonBirds'] and
+                            (msg['common'] in NON_BIRD_COMMON_NAMES)):
+                            # detections not of no interest that are not bird sounds
+                            topic = "birdpi/non_birds"
+                            publishDetection(mqttClient, topic, msg)
             elif state == journal.INVALIDATE:
-                logger.debug("journal files changed, so reopen and seek to start of new file")
+                logger.info("journal files changed, so reopen and seek to start of new file")
                 journalReader.seek_head()
             elif state == journal.NOP:
                 pass
         else:
-            logger.debug("Timed out waiting on journal event, continuing...")
+            logger.info("Timed out waiting on journal event, continuing...")
             time.sleep(0.1)
-    logger.debug("Exiting")
+    logger.info("Exiting")
 
 if __name__ == "__main__":
     main()
