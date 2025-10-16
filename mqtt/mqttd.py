@@ -203,7 +203,9 @@ def main():
                             topic = "birdpi/non_birds"
                             publishDetection(mqttClient, topic, msg)
             elif state == journal.INVALIDATE:
-                logger.info("journal files changed, so reopen and seek to start of new file")
+                logger.info("journal file changed, so reopen and seek to end of new file")
+                journalReader.close()
+                journalReader = journal.Reader()
                 journalReader.seek_head()
             elif state == journal.NOP:
                 pass
@@ -211,7 +213,6 @@ def main():
             logger.info("Timed out waiting on journal event, continuing...")
             time.sleep(0.1)
     logger.info("Exiting")
-
 
 if __name__ == "__main__":
     main()
