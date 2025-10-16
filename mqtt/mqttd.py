@@ -18,7 +18,6 @@ import configparser
 import logging
 import select
 import sys
-#import tempfile
 import time
 
 import json
@@ -117,6 +116,8 @@ def processJournalEntry(entry):
     return msgBody
 
 def getConfig():
+    global logger
+
     config = configparser.ConfigParser()
     if not config.read(CONF_FILE_PATH):
         logging.basicConfig(level=DEF_LOG_LEVEL)
@@ -157,8 +158,6 @@ def main():
     global poller, logger
 
     conf = getConfig()
-#    with tempfile.NamedTemporaryFile(prefix="tmpMqtt_", suffix="*.txt", delete=False) as f:
-#        json.dump(conf, sys.stderr, indent=4, sort_keys=False)
     logging.basicConfig(level=conf['LogLevel'])
     logger = logging.getLogger(__name__)
     poller = select.poll()
@@ -187,7 +186,7 @@ def main():
                             # all detections, not of no interest, with no other filtering
                             topic = "birdpi/raw_detections"
                             publishDetection(mqttClient, topic, msg)
-                        if (not conf['DisableConfidentDetections'] and 
+                        if (not conf['DisableConfidentDetections'] and
                             (msg['confidence'] >= conf['MinConfidence'])):
                             # all detections not of no interest and of sufficient confidence level
                             topic = "birdpi/confident_detections"
@@ -212,6 +211,7 @@ def main():
             logger.info("Timed out waiting on journal event, continuing...")
             time.sleep(0.1)
     logger.info("Exiting")
+
 
 if __name__ == "__main__":
     main()
