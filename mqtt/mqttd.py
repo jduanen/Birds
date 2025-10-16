@@ -181,7 +181,7 @@ def main():
                     if msg:
                         if msg['common'] in conf['BirdsOfNoInterest']:
                             # skip detections of no interest
-                            logger.warning("Detected name '%s' not of interest", msg['common']) ####FIXME
+                            logger.info("Detected name '%s' not of interest", msg['common'])
                             continue
                         if not conf['DisableRawDetections']:
                             # all detections, not of no interest, with no other filtering
