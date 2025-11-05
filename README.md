@@ -43,7 +43,7 @@ I tried a variety of different approaches to get high-quality audio input, inclu
   - on the web page: http://birdpi.lan --> Tools->Settings->Basic Settings
     * Location->Latitude/Longitude
     * Notifications [Optional]
-      - keep 'hassio:*' line and remove 'mqtt:*' line
+      - keep 'hassio:*' line and remove 'mqtt:*' line  ==> No, use MQTT instead
       - Tools->Settings->Advanced Settings
         * BirdNET-Lite Settings
           - Minimum Confidence: 0.85
@@ -227,14 +227,14 @@ I tried a variety of different approaches to get high-quality audio input, inclu
   - on birdpi, go to Tools->Settings->Notifications
     * add this: 'mqtt://username:password@your.mqtt.broker.ip:1883/birdnet/sightings'
   - on home assistant server, add this to MQTT sensor in configuration.yaml
-'''
+```
 mqtt:
-  sensor:
-    - name: "Birdnet sightings"
-      state_topic: "birdnet/sightings"
-      json_attributes_topic: "birdnet/sightings"
-      value_template: "{{ value_json.Common_Name }}"
-'''
+        sensor:
+                - name: "Birdnet sightings"
+                  state_topic: "birdnet/sightings"
+                  json_attributes_topic: "birdnet/sightings"
+                  value_template: "{{ value_json.Common_Name }}"
+```
     * and define the message body to be a JSON object
   - N.B. This is mutually exclusive with the HA notification method above
     * because it will be configured to send a different message type on each detection
