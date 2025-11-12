@@ -22,11 +22,14 @@ import time
 
 import json
 import paho.mqtt.client as mqtt
+from paho.mqtt.client import CallbackAPIVersion
 from parse import parse
 from systemd import journal
 
 
-DEF_LOG_LEVEL = "WARNING"
+ENABLE_DEBUGGING = True
+
+DEF_LOG_LEVEL = "DEBUG"
 CONF_FILE_PATH = "etc/systemd/mqttd.conf"   #### FIXME add leading '/'
 
 DEF_CONFIDENCE = 0.8
@@ -69,17 +72,33 @@ def initJournalReader(uid):
     logger.debug("Initialized Journal reader")
     return j
 
-def initMqttClient(host, port, keepalive):
-    client = mqtt.Client()
+def onConnect(client, userdata, flags, rc, properties=None):
+    if rc == 0:
+        logger.info("Connected to MQTT broker successfully")
+    else:
+        logger.error("Connection failed with result code: %d", rc)
+
+def initMqttClient(host, port, keepalive, username=None, password=None):
+    client = mqtt.Client(client_id="birdPiClient", callback_api_version=CallbackAPIVersion.VERSION2)
+    if username and password:
+        client.username_pw_set(username, password)
+    client.on_connect = onConnect
     if client.connect(host, port, keepalive) != mqtt.MQTT_ERR_SUCCESS:
         logger.error("Failed to connect to %s on port %d", host, port)
-        raise Exception
+        return None
+    if client.loop_start() != mqtt.MQTT_ERR_SUCCESS:
+        logger.error("Failed to start the polling loop")
+        return None
     return client
 
 def publishDetection(client, topic, msg):
     jsonPayload = json.dumps(msg)
     logging.debug("On topic %s, Publish %s", topic, jsonPayload)
-    client.publish(topic, jsonPayload)
+    result = client.publish(topic, jsonPayload)
+    if result.rc == mqtt.MQTT_ERR_SUCCESS:
+        logger.info("Message sent to topic: %s", topic)
+    else:
+        logger.warning("Failed to send message to topic: %s; error code: %d", topic, result.rc)
 
 def processJournalEntry(entry):
     if 'MESSAGE' not in entry:
@@ -158,11 +177,20 @@ def main():
     global poller, logger
 
     conf = getConfig()
-    logging.basicConfig(level=conf['LogLevel'])
+    if ENABLE_DEBUGGING:
+        conf['LogLevel'] = "DEBUG"  #### TMP TMP TMP
+        logging.basicConfig(
+            level=conf['LogLevel'],
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            handlers=[logging.StreamHandler(sys.stdout)])
+    else:
+        logging.basicConfig(level=conf['LogLevel'])
     logger = logging.getLogger(__name__)
     poller = select.poll()
     journalReader = initJournalReader(conf['Uid'])
     mqttClient = initMqttClient(conf['MqttHost'], conf['MqttPort'], conf['MqttKeepalive'])
+    if not mqttClient:
+        sys.exit(1)
 
     logger.info("Following user '%s' INFO logs starting from the last event",
                 conf['Uid'])
