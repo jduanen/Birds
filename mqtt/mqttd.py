@@ -89,6 +89,7 @@ def initMqttClient(host, port, keepalive, username=None, password=None):
     if client.loop_start() != mqtt.MQTT_ERR_SUCCESS:
         logger.error("Failed to start the polling loop")
         return None
+    logger.debug("MQTT Client Initialized")
     return client
 
 def publishDetection(client, topic, msg):
@@ -154,6 +155,8 @@ def getConfig():
         'MqttHost': config['MQTT'].get('MqttHost', fallback=DEF_MQTT_HOST),
         'MqttPort': config['MQTT'].getint('MqttPort', fallback=DEF_MQTT_PORT),
         'MqttKeepalive': config['MQTT'].getint('MqttKeepalive', fallback=DEF_MQTT_KEEPALIVE),
+        'MqttUsername': config['MQTT'].get('MqttUsername', fallback=None),
+        'MqttPasswd': config['MQTT'].get('MqttPasswd', fallback=None),
         'DisableRawDetections': config['MQTT'].getboolean('DisableRawDetections', fallback=False),
         'DisableConfidentDetections': config['MQTT'].getboolean('DisableConfidentDetections', fallback=False),
         'DisableMyBirds': config['MQTT'].getboolean('DisableMyBirds', fallback=False),
@@ -178,17 +181,19 @@ def main():
 
     conf = getConfig()
     if ENABLE_DEBUGGING:
-        conf['LogLevel'] = "DEBUG"  #### TMP TMP TMP
+        conf['LogLevel'] = "DEBUG"
         logging.basicConfig(
             level=conf['LogLevel'],
             format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
             handlers=[logging.StreamHandler(sys.stdout)])
     else:
         logging.basicConfig(level=conf['LogLevel'])
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger(f"{__file__}.{__name__}")
     poller = select.poll()
     journalReader = initJournalReader(conf['Uid'])
-    mqttClient = initMqttClient(conf['MqttHost'], conf['MqttPort'], conf['MqttKeepalive'])
+    mqttClient = initMqttClient(conf['MqttHost'], conf['MqttPort'],
+                                conf['MqttKeepalive'], conf['MqttUsername'],
+                                conf['MqttPasswd'])
     if not mqttClient:
         sys.exit(1)
 
@@ -231,10 +236,9 @@ def main():
                             topic = "birdpi/non_birds"
                             publishDetection(mqttClient, topic, msg)
             elif state == journal.INVALIDATE:
-                logger.info("journal file changed, so reopen and seek to end of new file")
+                logger.info("journal file changed, so close it and open the new file")
                 journalReader.close()
-                journalReader = journal.Reader()
-                journalReader.seek_head()
+                journalReader = initJournalReader(conf['Uid'])
             elif state == journal.NOP:
                 pass
         else:
