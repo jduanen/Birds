@@ -28,10 +28,10 @@ from systemd import journal
 import threading
 
 
-ENABLE_DEBUGGING = True
+ENABLE_DEBUGGING = False
 
-DEF_LOG_LEVEL = "DEBUG"
-CONF_FILE_PATH = "etc/systemd/mqttd.conf"   #### FIXME add leading '/'
+DEF_LOG_LEVEL = "WARN"
+CONF_FILE_PATH = "/etc/systemd/mqttd.conf"
 
 DEF_CONFIDENCE = 0.8
 
