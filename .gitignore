@@ -35,3 +35,4 @@
 wifi.h
 hold
 .vscode
+__pycache__
