@@ -25,6 +25,7 @@ import paho.mqtt.client as mqtt
 from paho.mqtt.client import CallbackAPIVersion
 from parse import parse
 from systemd import journal
+import threading
 
 
 ENABLE_DEBUGGING = True
@@ -56,7 +57,6 @@ NON_BIRD_NAMES = [names.split('_') for names in NON_BIRD_LABELS]
 NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
 
 logger = None
-poller = None
 
 
 def initJournalReader(uid):
@@ -68,15 +68,23 @@ def initJournalReader(uid):
     j.seek_tail()
     j.get_previous()
 
-    poller.register(j, j.get_events())
     logger.debug("Initialized Journal reader")
     return j
 
+def publishHaDiscovery(client):
+    msg = {"name": "BirdPi Raw", "state_topic": "birdpi/raw_detections",
+           "device_class": "?", "unique_id": "birdPiRaw0"}
+    jsonPayload = json.dumps(msg)
+    logger.info("Publish Discovery Message: TBD")  #### TMP TMP TMP
+
 def onConnect(client, userdata, flags, rc, properties=None):
-    if rc == 0:
-        logger.info("Connected to MQTT broker successfully")
-    else:
+    if rc != 0:
         logger.error("Connection failed with result code: %d", rc)
+        return True
+    logger.info("Connected to MQTT broker successfully")
+    # 100ms delay for connection to settle and then publish discovery message(s)
+    threading.Timer(0.1, publishHaDiscovery(client))
+    return False
 
 def initMqttClient(host, port, keepalive, username=None, password=None):
     client = mqtt.Client(client_id="birdPiClient", callback_api_version=CallbackAPIVersion.VERSION2)
@@ -177,7 +185,7 @@ def getConfig():
     return conf
 
 def main():
-    global poller, logger
+    global logger
 
     conf = getConfig()
     if ENABLE_DEBUGGING:
@@ -189,8 +197,9 @@ def main():
     else:
         logging.basicConfig(level=conf['LogLevel'])
     logger = logging.getLogger(f"{__file__}.{__name__}")
-    poller = select.poll()
     journalReader = initJournalReader(conf['Uid'])
+    poller = select.poll()
+    poller.register(journalReader, journalReader.get_events())
     mqttClient = initMqttClient(conf['MqttHost'], conf['MqttPort'],
                                 conf['MqttKeepalive'], conf['MqttUsername'],
                                 conf['MqttPasswd'])
@@ -239,6 +248,8 @@ def main():
                 logger.info("journal file changed, so close it and open the new file")
                 journalReader.close()
                 journalReader = initJournalReader(conf['Uid'])
+                poller = select.poll()
+                poller.register(journalReader, journalReader.get_events())
             elif state == journal.NOP:
                 pass
         else:
