@@ -9,6 +9,27 @@
 # The format of the birdpi logs is as follows:
 #  [utils.analysis][INFO] <startOffset>;<endOffset>-('<scientificName>_<commonName>', <confidence>)
 #
+# The format for CPU temperature messages:
+#  * Discovery
+#    topic = "homeassistant/sensor/birdpi_cpu/config"
+#    msg = {'name': 'BirdPi CPU Temperature',
+#           'state_topic': 'birdpi/cpu_temperature',
+#           'unit_of_measurement': '°C',
+#           'device_class': 'temperature',
+#           'state_class': 'measurement',
+#           'unique_id': 'birdpi_cpu_temperature',
+#           'value_template': '{{ value_json.temperature}}',
+#           'device': {
+#             'identifiers': ['birdpi'],
+#             'name': 'BirdPi CPU Temperature',
+#             'manufacturer': 'Custom',
+#             'model': 'BirdPi'
+#            }
+#          }
+#  * Sensor data
+#    topic = "birdpi/cpu_temperature"
+#    msg = {'timestamp': '2025-12-09T10:14:47.434099', 'temperature': 44.303}
+#
 ################################################################################
 
 #### TODO get labels whose scientific and common names are the same
@@ -97,7 +118,6 @@ def publishHaDiscovery(client):
         }
     }
     publishJson(client, topic, msg)
-    print(f"DISCOVERY: topic: {topic}, msg: {msg}")
 
 def onConnect(client, userdata, flags, rc, properties=None):
     if rc != 0:
@@ -294,7 +314,6 @@ def main():
                     }
                     topic = "birdpi/cpu_temperature"
                     publishJson(mqttClient, topic, msg)
-                    print(f"STATE: topic: {topic}, msg: {msg}")
                     lastCpuTempTime = now
                 except FileNotFoundError:
                     logger.info("Failed to read CPU temperature")
