@@ -15,6 +15,7 @@
 ####      grep -oP '([A-Z][^\s]*)_\1' Nachtzuster/model/labels_*/* | cut -d ":" -f 2 | sort | uniq
 
 import configparser
+from datetime import datetime
 import logging
 from logging.handlers import RotatingFileHandler
 import select
@@ -57,8 +58,11 @@ NON_BIRD_LABELS = [
 NON_BIRD_NAMES = [names.split('_') for names in NON_BIRD_LABELS]
 NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
 
-logger = None
-LOG_FILE = "/tmp/mqttd.log"
+LOG_FILE = "/var/log/mqttd.log"
+
+CPU_TEMP_INTERVAL = 60.0  # secs
+
+lastCpuTempTime = 0.0
 
 
 def initJournalReader(uid):
@@ -171,6 +175,7 @@ def getConfig():
         'DisableMyBirds': config['MQTT'].getboolean('DisableMyBirds', fallback=False),
         'DisableNonBirds': config['MQTT'].getboolean('DisableNonBirds', fallback=False),
         'MinConfidence': config['MQTT'].getfloat('MinConfidence', fallback=DEF_CONFIDENCE),
+        'CpuTemperature': config['MQTT'].getboolean('CpuTemperature', fallback=False),
     }
 
     conf['BirdsOfInterest'] = config['MQTT'].get('BirdsOfInterest', fallback=[])
@@ -185,8 +190,6 @@ def getConfig():
     return conf
 
 def main():
-    global logger
-
     conf = getConfig()
 
     rootLogger = logging.getLogger(__file__)
@@ -261,6 +264,19 @@ def main():
         else:
             logger.info("Timed out waiting on journal event, continuing...")
             time.sleep(0.1)
+        if conf['CpuTemperature']:
+            now = time.time()
+            if now - lastCpuTempTime >= CPU_TEMP_INTERVAL:
+                try:
+                    with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
+                        temp = int(f.read().strip()) / 1000.0
+                    msg = {'timestamp': datetime.fromtimestamp(now).isoformat(), 'cpuTemp': temp}
+                    topic = 'birdpi/cpu_temperature'
+                    publishDetection(client, topic, msg)
+                    lastCpuTemp = now
+                except FileNotFoundError:
+                    logger.info("Failed to read CPU temperature")
+
     logger.info("Exiting")
 
 if __name__ == "__main__":
