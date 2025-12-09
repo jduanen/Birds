@@ -60,7 +60,7 @@ NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
 
 LOG_FILE = "/var/log/mqttd.log"
 
-CPU_TEMP_INTERVAL = 60.0  # secs
+CPU_TEMP_INTERVAL = 15 * 60.0  # log every 15mins
 
 lastCpuTempTime = 0.0
 
@@ -80,16 +80,24 @@ def initJournalReader(uid):
     return j
 
 def publishHaDiscovery(client):
-    topic = "homeassistant/sensor/birdpi_cpu_temperature/config"
+    topic = "homeassistant/sensor/birdpi_cpu/config"
     msg = {
         "name": "BirdPi CPU Temperature",
-        "state_topic": "birdpi/temperature",
+        "state_topic": "birdpi/cpu_temperature",
         "unit_of_measurement": "°C",
         "device_class": "temperature",
-        "unique_id": "birdpi_temperature",
-        "state_class": "measurement"
+        "state_class": "measurement",
+        "unique_id": "birdpi_cpu_temperature",
+        "value_template": "{{ value_json.temperature}}",
+        "device": {
+            "identifiers": ["birdpi"],
+            "name": "BirdPi CPU Temperature",
+            "manufacturer": "Custom",
+            "model": "BirdPi"
+        }
     }
     publishJson(client, topic, msg)
+    print(f"DISCOVERY: topic: {topic}, msg: {msg}")
 
 def onConnect(client, userdata, flags, rc, properties=None):
     if rc != 0:
@@ -280,10 +288,13 @@ def main():
                 try:
                     with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
                         temp = int(f.read().strip()) / 1000.0
-                    msg = {'timestamp': datetime.fromtimestamp(now).isoformat(), 'cpuTemp': temp}
-                    topic = "homeassistant/sensor/birdpi_cpu_temperature/"
+                    msg = {
+                        'timestamp': datetime.fromtimestamp(now).isoformat(),
+                        'temperature': temp
+                    }
+                    topic = "birdpi/cpu_temperature"
                     publishJson(mqttClient, topic, msg)
-                    print(f"topic: {topic}, msg: {msg}")
+                    print(f"STATE: topic: {topic}, msg: {msg}")
                     lastCpuTempTime = now
                 except FileNotFoundError:
                     logger.info("Failed to read CPU temperature")
