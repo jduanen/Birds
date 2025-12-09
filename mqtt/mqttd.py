@@ -64,6 +64,8 @@ CPU_TEMP_INTERVAL = 60.0  # secs
 
 lastCpuTempTime = 0.0
 
+logger = None
+
 
 def initJournalReader(uid):
     j = journal.Reader()
@@ -78,10 +80,16 @@ def initJournalReader(uid):
     return j
 
 def publishHaDiscovery(client):
-    msg = {"name": "BirdPi Raw", "state_topic": "birdpi/raw_detections",
-           "device_class": "?", "unique_id": "birdPiRaw0"}
-    jsonPayload = json.dumps(msg)
-    logger.info("Publish Discovery Message: TBD")  #### TMP TMP TMP
+    topic = "homeassistant/sensor/birdpi_cpu_temperature/config"
+    msg = {
+        "name": "BirdPi CPU Temperature",
+        "state_topic": "birdpi/temperature",
+        "unit_of_measurement": "°C",
+        "device_class": "temperature",
+        "unique_id": "birdpi_temperature",
+        "state_class": "measurement"
+    }
+    publishJson(client, topic, msg)
 
 def onConnect(client, userdata, flags, rc, properties=None):
     if rc != 0:
@@ -106,7 +114,7 @@ def initMqttClient(host, port, keepalive, username=None, password=None):
     logger.debug("MQTT Client Initialized")
     return client
 
-def publishDetection(client, topic, msg):
+def publishJson(client, topic, msg):
     jsonPayload = json.dumps(msg)
     logging.debug("On topic %s, Publish %s", topic, jsonPayload)
     result = client.publish(topic, jsonPayload)
@@ -132,7 +140,7 @@ def processJournalEntry(entry):
         logger.info("Bad parse of message, discarding entry")
         return None
     names = parts[2].split("_")
-    if len(names) != 2:
+    if len(names) != 2 and len(names) != 4:
         logger.error("Bad names: %s, discarding entry", parts[2])
         return None
     intervalStart = float(parts[0])
@@ -190,6 +198,8 @@ def getConfig():
     return conf
 
 def main():
+    global logger, lastCpuTempTime
+
     conf = getConfig()
 
     rootLogger = logging.getLogger(__file__)
@@ -236,23 +246,23 @@ def main():
                         if not conf['DisableRawDetections']:
                             # all detections, not of no interest, with no other filtering
                             topic = "birdpi/raw_detections"
-                            publishDetection(mqttClient, topic, msg)
+                            publishJson(mqttClient, topic, msg)
                         if (not conf['DisableConfidentDetections'] and
                             (msg['confidence'] >= conf['MinConfidence'])):
                             # all detections not of no interest and of sufficient confidence level
                             topic = "birdpi/confident_detections"
-                            publishDetection(mqttClient, topic, msg)
+                            publishJson(mqttClient, topic, msg)
                         if (not conf['DisableMyBirds'] and
                             (msg['confidence'] >= conf['MinConfidence']) and
                             (msg['common'] in conf['BirdsOfInterest'])):
                             # detections of interest, not of no interest, and of sufficient confidence level
                             topic = "birdpi/my_birds"
-                            publishDetection(mqttClient, topic, msg)
+                            publishJson(mqttClient, topic, msg)
                         if (not conf['DisableNonBirds'] and
                             (msg['common'] in NON_BIRD_COMMON_NAMES)):
                             # detections not of no interest that are not bird sounds
                             topic = "birdpi/non_birds"
-                            publishDetection(mqttClient, topic, msg)
+                            publishJson(mqttClient, topic, msg)
             elif state == journal.INVALIDATE:
                 logger.info("journal file changed, so close it and open the new file")
                 journalReader.close()
@@ -271,12 +281,12 @@ def main():
                     with open('/sys/class/thermal/thermal_zone0/temp', 'r') as f:
                         temp = int(f.read().strip()) / 1000.0
                     msg = {'timestamp': datetime.fromtimestamp(now).isoformat(), 'cpuTemp': temp}
-                    topic = 'birdpi/cpu_temperature'
-                    publishDetection(client, topic, msg)
-                    lastCpuTemp = now
+                    topic = "homeassistant/sensor/birdpi_cpu_temperature/"
+                    publishJson(mqttClient, topic, msg)
+                    print(f"topic: {topic}, msg: {msg}")
+                    lastCpuTempTime = now
                 except FileNotFoundError:
                     logger.info("Failed to read CPU temperature")
-
     logger.info("Exiting")
 
 if __name__ == "__main__":
