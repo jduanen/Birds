@@ -7,7 +7,7 @@
 #  (potentially overlapping) time chunk within each recording interval.
 #
 # The format of the birdpi logs is as follows:
-#  [server][INFO] <startOffset>;<endOffset>-('<scientificName>_<commonName>', <confidence>)
+#  [utils.analysis][INFO] <startOffset>;<endOffset>-('<scientificName>_<commonName>', <confidence>)
 #
 ################################################################################
 
@@ -16,6 +16,7 @@
 
 import configparser
 import logging
+from logging.handlers import RotatingFileHandler
 import select
 import sys
 import time
@@ -57,6 +58,7 @@ NON_BIRD_NAMES = [names.split('_') for names in NON_BIRD_LABELS]
 NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
 
 logger = None
+LOG_FILE = "/tmp/mqttd.log"
 
 
 def initJournalReader(uid):
@@ -116,7 +118,7 @@ def processJournalEntry(entry):
     msgTime = entry['__REALTIME_TIMESTAMP']
     message = entry['MESSAGE']
     logger.debug("%s - message: %s", msgTime, message)
-    res = parse("[server][INFO] {};{}-({}, {})", message)
+    res = parse("[utils.analysis][INFO] {};{}-({}, {})", message)
     if not res:
         logger.debug("Unable to parse message, discarding entry")
         return None
@@ -144,17 +146,16 @@ def processJournalEntry(entry):
     return msgBody
 
 def getConfig():
-    global logger
+    consoleLogger = logging.getLogger(__name__)
+    consoleLogger.setLevel(logging.WARNING)
 
     config = configparser.ConfigParser()
     if not config.read(CONF_FILE_PATH):
-        logging.basicConfig(level=DEF_LOG_LEVEL)
-        logger = logging.getLogger(__name__)
-        logger.error("Failed to read config file at: %s", CONF_FILE_PATH)
+        consoleLogger.error("Failed to read config file at: %s", CONF_FILE_PATH)
         sys.exit(1)
     minC = float(config['MQTT']['MinConfidence'])
     if minC < 0 or minC > 1.0:
-        logger.error("Invalid MinConfidence value: %f (must be in [0.0,1.0])", minC)
+        consoleLogger.error("Invalid MinConfidence value: %f (must be in [0.0,1.0])", minC)
         sys.exit(1)
     conf = {
         'LogLevel': getattr(logging, config['MQTT'].get('LogLevel', fallback=DEF_LOG_LEVEL)),
@@ -171,6 +172,7 @@ def getConfig():
         'DisableNonBirds': config['MQTT'].getboolean('DisableNonBirds', fallback=False),
         'MinConfidence': config['MQTT'].getfloat('MinConfidence', fallback=DEF_CONFIDENCE),
     }
+
     conf['BirdsOfInterest'] = config['MQTT'].get('BirdsOfInterest', fallback=[])
     if conf['BirdsOfInterest']:
         conf['BirdsOfInterest'] = [item.strip() for item in conf['BirdsOfInterest'].split(',')]
@@ -178,9 +180,7 @@ def getConfig():
     if conf['BirdsOfNoInterest']:
         conf['BirdsOfNoInterest'] = [item.strip() for item in conf['BirdsOfNoInterest'].split(',')]
     if set(conf['BirdsOfInterest']) & set(conf['BirdsOfNoInterest']):
-        logging.basicConfig(level=conf['LogLevel'])
-        logger = logging.getLogger(__name__)
-        logger.error("Cannot have a name that is both of interest and of no interest")
+        consoleLogger.error("Cannot have a name that is both of interest and of no interest")
         sys.exit(1)
     return conf
 
@@ -188,15 +188,21 @@ def main():
     global logger
 
     conf = getConfig()
-    if ENABLE_DEBUGGING:
-        conf['LogLevel'] = "DEBUG"
-        logging.basicConfig(
-            level=conf['LogLevel'],
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            handlers=[logging.StreamHandler(sys.stdout)])
-    else:
-        logging.basicConfig(level=conf['LogLevel'])
+
+    rootLogger = logging.getLogger(__file__)
+    rootLogger.setLevel(logging.WARNING)
     logger = logging.getLogger(f"{__file__}.{__name__}")
+    logger.setLevel(conf['LogLevel'])
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    if ENABLE_DEBUGGING:
+        handler = logging.StreamHandler()  # logging to console for debugging
+    else:
+        handler = RotatingFileHandler(LOG_FILE, maxBytes=1_000_000, backupCount=2)  # logging to file
+    handler.setLevel(logging.DEBUG)
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.propagate = False  # prevent root interference
+
     journalReader = initJournalReader(conf['Uid'])
     poller = select.poll()
     poller.register(journalReader, journalReader.get_events())
