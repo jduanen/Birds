@@ -282,6 +282,11 @@ mqtt:
     * 'sudo mkdir /var/log/mqtt'
     * 'sudo chown mqtt:mqtt /var/log/mqtt'
     * 'sudo chmod 750 /var/log/mqtt'
+* setup
+  - get and run 'getMqttd.sh' to get the mqttd files from github
+    * alternatively, just clone "github.com/jduanen/Birds.git" and delete everything except "mqtt/"
+  - setup the system for mqtt by creating user and group
+    * './setupMqttd.sh'
 
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
