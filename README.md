@@ -272,6 +272,16 @@ mqtt:
     * `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/mqttd.conf /etc/systemd/`
 * run the mqtt publisher as a service
   - `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/system/mqttd.service /etc/systemd/system/`
+  - runs as user='mqtt' and group='mqtt'
+    * on modern Debian distros
+      - 'sudo groupadd mqtt'
+      - 'sudo adduser --system --no-create-home --group mqtt'
+* log to a private file in /var/log
+  - for debug don't want to write to journal, because that's what we're reading
+  - set up for private logging
+    * 'sudo mkdir /var/log/mqtt'
+    * 'sudo chown mqtt:mqtt /var/log/mqtt'
+    * 'sudo chmod 750 /var/log/mqtt'
 
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
