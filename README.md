@@ -274,19 +274,28 @@ mqtt:
   - `sudo ln -s ${HOME}/Code/mqtt/etc/systemd/system/mqttd.service /etc/systemd/system/`
   - runs as user='mqtt' and group='mqtt'
     * on modern Debian distros
-      - 'sudo groupadd mqtt'
-      - 'sudo adduser --system --no-create-home --group mqtt'
+      - `sudo groupadd mqtt`
+      - `sudo adduser --system --no-create-home --group mqtt`
 * log to a private file in /var/log
   - for debug don't want to write to journal, because that's what we're reading
   - set up for private logging
-    * 'sudo mkdir /var/log/mqtt'
-    * 'sudo chown mqtt:mqtt /var/log/mqtt'
-    * 'sudo chmod 750 /var/log/mqtt'
+    * `sudo mkdir /var/log/mqtt`
+    * `sudo chown mqtt:mqtt /var/log/mqtt`
+    * `sudo chmod 750 /var/log/mqtt`
 * setup
   - get and run 'getMqttd.sh' to get the mqttd files from github
     * alternatively, just clone "github.com/jduanen/Birds.git" and delete everything except "mqtt/"
   - setup the system for mqtt by creating user and group
-    * './setupMqttd.sh'
+  - create links to mqttd service files
+    * `sudo ln -s ${HOME}/Code/Birds/etc/systemd/mqttd.conf /etc/systemd/`
+    * `sudo ln -s ${HOME}/Code/Birds/etc/systemd/system/mqttd.service /etc/systemd/system/`
+  - run mqttd daemon
+    * reload systemd: `sudo systemctl daemon-reload`
+    * enable the service: `sudo systemctl enable mqttd`
+    * start the service: `sudo systemctl start mqttd`
+    * check the status of the service: `sudo systemctl status mqttd`
+* a script that does it all: './setupMqttd.sh'
+
 
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
