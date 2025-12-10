@@ -79,7 +79,7 @@ NON_BIRD_LABELS = [
 NON_BIRD_NAMES = [names.split('_') for names in NON_BIRD_LABELS]
 NON_BIRD_SCIENTIFIC_NAMES, NON_BIRD_COMMON_NAMES = zip(*NON_BIRD_NAMES)
 
-LOG_FILE = "/var/log/mqttd.log"
+LOG_FILE = "/var/log/mqtt/mqttd.log"
 
 CPU_TEMP_INTERVAL = 15 * 60.0  # log every 15mins
 
