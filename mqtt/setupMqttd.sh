@@ -23,7 +23,7 @@ if [ ! -e "${MQTTD_CONF_PATH}/mqttd.conf" ]; then
 fi
 
 MQTTD_SERVICE_PATH="${MQTTD_PATH}/etc/systemd/system"
-if [ -e "${MQTTD_SERVICE_PATH}/mqttd.conf" ]; then
+if [ -e "${MQTTD_SERVICE_PATH}/mqttd.service" ]; then
     sudo rm /etc/systemd/system/mqttd.service
 fi
 sudo ln -s ${MQTTD_SERVICE_PATH}/mqttd.service /etc/systemd/system/
