@@ -12,7 +12,7 @@ if [ ! -d "$LOG_PATH" ]; then
 fi
 
 MQTTD_PATH="${HOME}/Code/Birds/mqtt"
-MQTTD_CONF_PATH="${MQTTD_PATH}/etc/systemd/"
+MQTTD_CONF_PATH="${MQTTD_PATH}/etc/systemd"
 sudo rm /etc/systemd/mqttd.conf
 sudo ln -s ${MQTTD_CONF_PATH}/mqttd.conf /etc/systemd/
 if [ ! -e "${MQTTD_CONF_PATH}/mqttd.conf" ]; then
@@ -20,7 +20,7 @@ if [ ! -e "${MQTTD_CONF_PATH}/mqttd.conf" ]; then
     exit 1
 fi
 
-MQTTD_SERVICE_PATH="${MQTTD_PATH}/etc/systemd/system/"
+MQTTD_SERVICE_PATH="${MQTTD_PATH}/etc/systemd/system"
 sudo rm /etc/systemd/system/mqttd.service
 sudo ln -s ${MQTTD_SERVICE_PATH}/mqttd.service /etc/systemd/system/
 if [ ! -e "${MQTTD_SERVICE_PATH}/mqttd.conf" ]; then
