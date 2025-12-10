@@ -12,10 +12,32 @@ if [ ! -d "$LOG_PATH" ]; then
 fi
 
 MQTTD_PATH="${HOME}/Code/Birds/mqtt"
-sudo ln -s ${MQTTD_PATH}/etc/systemd/mqttd.conf /etc/systemd/
-sudo ln -s ${MQTTD_PATH}/etc/systemd/system/mqttd.service /etc/systemd/system/
+MQTTD_CONF_PATH="${MQTTD_PATH}/etc/systemd/"
+if [ -L "${MQTTD_CONF_PATH}/mqttd.conf" ]; then
+    sudo rm /etc/systemd/mqttd.conf
+else
+    sudo ln -s ${MQTTD_CONF_PATH}/mqttd.conf /etc/systemd/
+fi
+if [ ! -e "${MQTTD_CONF_PATH}/mqttd.conf" ]; then
+    echo "ERROR: Failed to make link to mqttd conf file"
+    exit 1
+fi
 
+MQTTD_SERVICE_PATH="${MQTTD_PATH}/etc/systemd/system/"
+if [ -L "${MQTTD_SERVICE_PATH}/mqttd.service" ]; then
+    sudo rm /etc/systemd/system/mqttd.service
+else
+    sudo ln -s ${MQTTD_SERVICE_PATH}/mqttd.service /etc/systemd/system/
+fi
+if [ ! -e "${MQTTD_SERVICE_PATH}/mqttd.conf" ]; then
+    echo "ERROR: Failed to make link to mqttd service file"
+    exit 1
+fi
+
+sudo systemctl stop mqttd.service
 sudo systemctl daemon-reload
+
 sudo systemctl enable mqttd.service
 sudo systemctl start mqttd.service
+
 sudo systemctl status mqttd.service
