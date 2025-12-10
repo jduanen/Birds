@@ -17,7 +17,7 @@
 cd ${HOME}/Code
 git clone --no-checkout --filter=blob:none --sparse https://github.com/jduanen/Birds.git
 
-cd ./Code/Birds
+cd ./Birds
 git sparse-checkout set mqtt/
 git checkout main
 rm ./BirdPiSensor.png ./BirdSensor.code-workspace ./LICENSE 
