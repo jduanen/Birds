@@ -1,11 +1,12 @@
 #!/bin/bash
 #
 # Script to setup birdpi for mqttd
+# 
 
+LOG_PATH="/var/log/mqtt"
 
-sudo groupadd mqtt
-sudo adduser --system --no-create-home --group mqtt
-
-sudo mkdir /var/log/mqtt
-sudo chown mqtt:mqtt /var/log/mqtt
-sudo chmod 750 /var/log/mqtt
+if [ ! -d "$LOG_PATH" ]; then
+    sudo mkdir -p "$LOG_PATH"
+    sudo chown jdn:jdn "$LOG_PATH"
+    sudo chmod 750 "$LOG_PATH"
+fi
