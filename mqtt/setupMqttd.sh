@@ -27,7 +27,7 @@ if [ -e "${MQTTD_SERVICE_PATH}/mqttd.service" ]; then
     sudo rm /etc/systemd/system/mqttd.service
 fi
 sudo ln -s ${MQTTD_SERVICE_PATH}/mqttd.service /etc/systemd/system/
-if [ ! -e "${MQTTD_SERVICE_PATH}/mqttd.conf" ]; then
+if [ ! -e "${MQTTD_SERVICE_PATH}/mqttd.service" ]; then
     echo "ERROR: Failed to make link to mqttd service file"
     exit 1
 fi
