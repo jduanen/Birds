@@ -121,7 +121,7 @@ def publishHaDiscovery(client):
 
 def onConnect(client, userdata, flags, rc, properties=None):
     if rc != 0:
-        logger.error("Connection failed with result code: %d", rc)
+        logger.error("Connection failed with result code: %s", rc)
         return True
     logger.info("Connected to MQTT broker successfully")
     # 100ms delay for connection to settle and then publish discovery message(s)
