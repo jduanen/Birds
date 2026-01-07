@@ -296,7 +296,6 @@ mqtt:
     * check the status of the service: `sudo systemctl status mqttd`
 * a script that does it all: './setupMqttd.sh'
 
-
 * Using the MQTT messages
   - can create a listener that subscribes to the raw topic
     * can filter/transform the detection messages and then publish to another topic
