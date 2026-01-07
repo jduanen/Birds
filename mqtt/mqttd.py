@@ -117,7 +117,7 @@ def publishHaDiscovery(client):
             "model": "BirdPi"
         }
     }
-    publishJson(client, topic, msg)
+    publishJson(client, topic, msg, retain=True)
 
 def onConnect(client, userdata, flags, rc, properties=None):
     if rc != 0:
@@ -142,10 +142,10 @@ def initMqttClient(host, port, keepalive, username=None, password=None):
     logger.debug("MQTT Client Initialized")
     return client
 
-def publishJson(client, topic, msg):
+def publishJson(client, topic, msg, retain=False):
     jsonPayload = json.dumps(msg)
-    logging.debug("On topic %s, Publish %s", topic, jsonPayload)
-    result = client.publish(topic, jsonPayload)
+    logging.debug("On topic %s, Publish %s, Retain=%d", topic, jsonPayload, retain)
+    result = client.publish(topic, payload=jsonPayload, qos=1, retain=retain)
     if result.rc == mqtt.MQTT_ERR_SUCCESS:
         logger.info("Message sent to topic: %s", topic)
     else:
